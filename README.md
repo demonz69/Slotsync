@@ -1,0 +1,2 @@
+# Slotsync
+Java Group project 
