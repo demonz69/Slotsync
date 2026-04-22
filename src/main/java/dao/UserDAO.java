@@ -8,13 +8,7 @@ public class UserDAO {
     private Connection con;
 
     public UserDAO() {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/slotsync", "root", "");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        con = DBConnection.getConnection();
     }
 
     // Register User
