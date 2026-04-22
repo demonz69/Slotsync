@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    private static final String URL = "jdbc:mysql://localhost:3306/Slotsync";
-    private static final String USER = "20620816";
-    private static final String PASSWORD = "";
+    private static final String URL = "jdbc:mysql://localhost:3306/syncslot";
+    private static final String USER = "root";
+    private static final String PASSWORD = "20620816";
 
     public static Connection getConnection() {
         Connection con = null;
