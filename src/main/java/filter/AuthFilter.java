@@ -16,9 +16,11 @@ public class AuthFilter implements Filter {
 
         HttpSession session = request.getSession(false);
 
+        String requestURI = request.getRequestURI();
         boolean loggedIn = (session != null && session.getAttribute("user") != null);
+        boolean authRequest = requestURI.contains("/views/auth/");
 
-        if (loggedIn) {
+        if (loggedIn || authRequest) {
             chain.doFilter(req, res);
         } else {
             response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
