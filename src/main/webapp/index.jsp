@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SlotSync — Booking infrastructure for modern service businesses. Fewer no-shows, smarter staff utilization, and a checkout that actually converts.">
     <title>SlotSync | Modern Appointment Booking</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=2">
 </head>
 <body>
 
