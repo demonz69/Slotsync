@@ -31,6 +31,19 @@
             <p class="sub">Free to start. No credit card required.</p>
 
             <div class="col gap-4">
+                <!-- Account Type -->
+                <div class="field">
+                    <label>Account Type</label>
+                    <div class="role-chips">
+                        <label class="role-chip active">
+                            <input type="radio" name="role" value="client" checked> Client
+                        </label>
+                        <label class="role-chip">
+                            <input type="radio" name="role" value="employee"> Business
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Full Name -->
                 <div class="field">
                     <label for="reg-name">Full name</label>
@@ -87,6 +100,17 @@
     <!-- Client-side validation -->
     <script>
         const form = document.getElementById('register-form');
+
+        // Handle role chips selection
+        document.querySelectorAll('input[name="role"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.role-chip').forEach(chip => chip.classList.remove('active'));
+                if (this.checked) {
+                    this.parentElement.classList.add('active');
+                }
+            });
+        });
+
         const fields = {
             name: { el: document.getElementById('reg-name'), err: document.getElementById('err-name') },
             email: { el: document.getElementById('reg-email'), err: document.getElementById('err-email') },

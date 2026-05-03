@@ -19,7 +19,14 @@ public class RegisterServlet extends HttpServlet {
         String fullName = request.getParameter("fullName");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        String requestedRole = request.getParameter("role");
         String role = "client"; // default role
+        
+        if ("employee".equals(requestedRole)) {
+            role = "employee";
+        } else if ("client".equals(requestedRole)) {
+            role = "client";
+        }
 
         // VALIDATION
         if (!ValidationUtil.isValidName(fullName)) {
