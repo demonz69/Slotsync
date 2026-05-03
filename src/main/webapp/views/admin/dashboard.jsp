@@ -1,19 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.User" %>
 <%
-    // Check if user is logged in and is admin
     User user = (User) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
         return;
     }
-    String userName = user.getFullName() != null ? user.getFullName() : "Admin";
-    String userInitials = "";
-    if (userName != null && !userName.isEmpty()) {
-        String[] parts = userName.split(" ");
-        for (String part : parts) {
-            if (!part.isEmpty()) userInitials += part.charAt(0);
-        }
+    if (!"admin".equals(user.getRole())) {
+        response.sendRedirect(request.getContextPath() + "/views/user/home.jsp");
+        return;
     }
 %>
 <!DOCTYPE html>
@@ -21,278 +16,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SlotSync Admin Dashboard — Manage bookings, users, services, and revenue.">
-    <title>Admin Dashboard | SlotSync</title>
-    <link rel="stylesheet" href="/css/style.css?v=2">
+    <meta name="description" content="SlotSync Admin — Platform overview of businesses, users, and bookings.">
+    <title>Overview | SlotSync Admin</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <style>
+        .activity-list { display: flex; flex-direction: column; }
+        .activity-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 20px; border-bottom: 1px solid var(--border);
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-avatar {
+            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+            background: var(--blue-50); color: var(--blue-700); border: 1px solid #bfdbfe;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+        }
+        .activity-body { flex: 1; min-width: 0; }
+        .activity-body .line { font-size: 13.5px; color: var(--text); line-height: 1.4; }
+        .activity-body .line strong { font-weight: 600; }
+        .activity-body .line a { color: var(--blue); }
+        .activity-body .time { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+        .badge-activity {
+            font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 999px;
+            background: var(--amber-50); color: #b45309; border: 1px solid #fde68a;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .biz-list { display: flex; flex-direction: column; }
+        .biz-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 20px; border-bottom: 1px solid var(--border);
+        }
+        .biz-item:last-child { border-bottom: none; }
+        .biz-icon {
+            width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+            background: var(--bg-alt); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center; font-size: 15px;
+        }
+        .biz-info { flex: 1; min-width: 0; }
+        .biz-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+        .biz-owner { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+        .panel-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .stat-delta.neutral { color: var(--text-2); }
+        @media (max-width: 900px) { .panel-row { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-
-    <div class="dash">
-        <!-- ===== Sidebar ===== -->
-        <aside class="sidebar" id="admin-sidebar">
-            <div class="sidebar-brand">
-                <a href="${pageContext.request.contextPath}/" class="brand">
-                    <div class="brand-mark"></div>
-                    <span>SlotSync</span>
-                </a>
-                <div class="badge badge-blue" style="margin-top:10px; font-size:11px">Admin</div>
+<div class="dash">
+    <aside class="sidebar" id="admin-sidebar">
+        <div class="sidebar-brand">
+            <a href="${pageContext.request.contextPath}/" class="brand" id="nav-brand">
+                <div class="brand-mark"></div>
+                <span>SlotSync</span>
+            </a>
+            <div class="badge badge-blue" style="margin-top:10px; font-size:11px">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Admin Panel
             </div>
+        </div>
+        <nav class="col gap-2">
+            <div class="sidebar-section">Operations</div>
+            <a href="${pageContext.request.contextPath}/views/admin/dashboard.jsp" class="sidenav-item active" id="sidenav-overview">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Overview
+            </a>
+            <a href="${pageContext.request.contextPath}/views/admin/manage-businesses.jsp" class="sidenav-item" id="sidenav-businesses">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18M9 21V9M3 9l2-5h14l2 5M3 9a2 2 0 000 4v7a1 1 0 001 1h16a1 1 0 001-1v-7a2 2 0 000-4"/></svg>
+                Manage Businesses
+            </a>
+            <a href="${pageContext.request.contextPath}/views/admin/manage-users.jsp" class="sidenav-item" id="sidenav-users">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0z"/><path d="M2 21a8 8 0 0120 0"/></svg>
+                Manage Users
+            </a>
+        </nav>
+        <div class="sidebar-foot">
+            <a href="${pageContext.request.contextPath}/logout" class="sidenav-item" id="sidenav-logout">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                Sign out
+            </a>
+        </div>
+    </aside>
 
-            <!-- Navigation -->
-            <nav class="col gap-2">
-                <div class="sidebar-section">Operations</div>
-
-                <a href="${pageContext.request.contextPath}/views/admin/dashboard.jsp" class="sidenav-item active" id="sidenav-overview">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    Overview
-                </a>
-
-                <a href="${pageContext.request.contextPath}/views/admin/manage-users.jsp" class="sidenav-item" id="sidenav-users">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0z"/><path d="M2 21a8 8 0 0120 0"/></svg>
-                    Users
-                </a>
-
-                <a href="${pageContext.request.contextPath}/views/admin/manage-services.jsp" class="sidenav-item" id="sidenav-services">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 13h18"/></svg>
-                    Services
-                </a>
-
-                <div class="sidebar-section">Account</div>
-
-                <a href="${pageContext.request.contextPath}/views/about.jsp" class="sidenav-item" id="sidenav-about">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg>
-                    About
-                </a>
-
-                <a href="${pageContext.request.contextPath}/views/contact.jsp" class="sidenav-item" id="sidenav-contact">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-                    Contact
-                </a>
-            </nav>
-
-            <div class="sidebar-foot">
-                <a href="${pageContext.request.contextPath}/logout" class="sidenav-item" id="sidenav-logout">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                    Sign out
-                </a>
+    <main class="dash-main" id="admin-main">
+        <div class="dash-head animate-in">
+            <div>
+                <h1>Platform overview</h1>
+                <div class="sub">Live snapshot of every business and user on SlotSync.</div>
             </div>
-        </aside>
+        </div>
 
-        <!-- ===== Main Content ===== -->
-        <main class="dash-main" id="admin-main">
-            <div class="dash-head">
-                <div>
-                    <h1>Operations overview</h1>
-                    <div class="sub">Live snapshot of bookings, users, and revenue.</div>
-                </div>
-                <div class="btn btn-secondary">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
-                    This week
+        <div class="stat-row animate-in">
+            <div class="stat-card" id="stat-businesses">
+                <div class="stat-label">Total Businesses</div>
+                <div class="stat-value mono">3</div>
+                <div class="stat-delta up">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+                    +1 this month
                 </div>
             </div>
-
-            <!-- ===== Stat Cards ===== -->
-            <div class="stat-row animate-in">
-                <div class="stat-card" id="stat-bookings">
-                    <div class="stat-label">Bookings (week)</div>
-                    <div class="stat-value mono">277</div>
-                    <div class="stat-delta up">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
-                        +12.4% vs last week
-                    </div>
-                </div>
-                <div class="stat-card" id="stat-users">
-                    <div class="stat-label">Active users</div>
-                    <div class="stat-value mono">1,284</div>
-                    <div class="stat-delta up">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
-                        +38 this week
-                    </div>
-                </div>
-                <div class="stat-card" id="stat-revenue">
-                    <div class="stat-label">Revenue</div>
-                    <div class="stat-value mono">$24,820</div>
-                    <div class="stat-delta up">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
-                        +8.1%
-                    </div>
-                </div>
-                <div class="stat-card" id="stat-noshow">
-                    <div class="stat-label">No-show rate</div>
-                    <div class="stat-value mono">3.2%</div>
-                    <div class="stat-delta up">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
-                        -0.6 pp
-                    </div>
+            <div class="stat-card" id="stat-users">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value mono">1,284</div>
+                <div class="stat-delta up">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+                    +38 this week
                 </div>
             </div>
-
-            <!-- ===== Charts Row ===== -->
-            <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:20px; margin-bottom:24px" class="animate-in animate-in-delay-1">
-                <!-- Bar Chart -->
-                <div class="card" id="chart-bookings">
-                    <div class="between" style="padding:18px 22px; border-bottom:1px solid var(--border)">
-                        <div>
-                            <h3 class="h3">Bookings by day</h3>
-                            <div class="muted small" style="margin-top:2px">Last 7 days</div>
-                        </div>
-                        <span class="badge badge-blue"><span class="badge-dot"></span> This week</span>
-                    </div>
-                    <div style="padding:8px 22px 22px">
-                        <div class="bar-chart" id="bar-chart">
-                            <!-- Bars are generated by JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Top Employees -->
-                <div class="card" id="card-employees">
-                    <div style="padding:18px 22px; border-bottom:1px solid var(--border)">
-                        <h3 class="h3">Top employees</h3>
-                        <div class="muted small" style="margin-top:2px">By bookings this month</div>
-                    </div>
-                    <div class="col" style="padding:6px">
-                        <div class="between" style="padding:12px 16px">
-                            <div class="row gap-3 items-center">
-                                <div class="avatar" style="width:36px; height:36px; font-size:13px">AM</div>
-                                <div>
-                                    <div style="font-weight:500; font-size:14px">Aanand Mandal</div>
-                                    <div class="muted tiny">Senior Stylist</div>
-                                </div>
-                            </div>
-                            <div class="mono small" style="font-weight:600">412</div>
-                        </div>
-                        <div class="between" style="padding:12px 16px">
-                            <div class="row gap-3 items-center">
-                                <div class="avatar" style="width:36px; height:36px; font-size:13px">RC</div>
-                                <div>
-                                    <div style="font-weight:500; font-size:14px">Rose Chaudhary</div>
-                                    <div class="muted tiny">Color Specialist</div>
-                                </div>
-                            </div>
-                            <div class="mono small" style="font-weight:600">287</div>
-                        </div>
-                        <div class="between" style="padding:12px 16px">
-                            <div class="row gap-3 items-center">
-                                <div class="avatar" style="width:36px; height:36px; font-size:13px">MS</div>
-                                <div>
-                                    <div style="font-weight:500; font-size:14px">Mausam Shrestha</div>
-                                    <div class="muted tiny">Barber</div>
-                                </div>
-                            </div>
-                            <div class="mono small" style="font-weight:600">503</div>
-                        </div>
-                        <div class="between" style="padding:12px 16px">
-                            <div class="row gap-3 items-center">
-                                <div class="avatar" style="width:36px; height:36px; font-size:13px">TB</div>
-                                <div>
-                                    <div style="font-weight:500; font-size:14px">Tiraj Basnet</div>
-                                    <div class="muted tiny">Nail Technician</div>
-                                </div>
-                            </div>
-                            <div class="mono small" style="font-weight:600">196</div>
-                        </div>
-                    </div>
+            <div class="stat-card" id="stat-bookings">
+                <div class="stat-label">Total Bookings</div>
+                <div class="stat-value mono">4,712</div>
+                <div class="stat-delta up">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+                    +12.4%
                 </div>
             </div>
+            <div class="stat-card" id="stat-pending">
+                <div class="stat-label">Pending Approvals</div>
+                <div class="stat-value mono">2</div>
+                <div class="stat-delta neutral">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    <a href="${pageContext.request.contextPath}/views/admin/manage-businesses.jsp" style="color:inherit; text-decoration:none">check review</a>
+                </div>
+            </div>
+        </div>
 
-            <!-- ===== Popular Services Table ===== -->
-            <div class="card animate-in animate-in-delay-2" id="card-popular-services">
-                <div class="between" style="padding:18px 22px; border-bottom:1px solid var(--border)">
+        <div class="panel-row animate-in animate-in-delay-1">
+            <div class="card" id="card-activity">
+                <div class="between" style="padding:16px 20px; border-bottom:1px solid var(--border)">
                     <div>
-                        <h3 class="h3">Most popular services</h3>
-                        <div class="muted small" style="margin-top:2px">Sorted by bookings</div>
+                        <h3 class="h3" style="font-size:15px">Recent activity</h3>
+                        <div class="muted tiny" style="margin-top:2px">Across the platform</div>
                     </div>
-                    <a href="${pageContext.request.contextPath}/views/admin/manage-services.jsp" class="btn btn-secondary btn-sm">Manage services</a>
+                    <button class="btn btn-secondary btn-sm" id="btn-export">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        Export
+                    </button>
                 </div>
-                <table class="table" id="table-popular">
-                    <thead>
-                        <tr>
-                            <th>Service</th>
-                            <th style="text-align:right">Bookings</th>
-                            <th style="text-align:right">Revenue</th>
-                            <th style="text-align:right">Trend</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="hov">
-                            <td style="font-weight:500">Standard Haircut</td>
-                            <td class="mono" style="text-align:right">184</td>
-                            <td class="mono" style="text-align:right">$5,152</td>
-                            <td style="text-align:right"><span class="stat-delta up">+12%</span></td>
-                        </tr>
-                        <tr class="hov">
-                            <td style="font-weight:500">Beard Trim</td>
-                            <td class="mono" style="text-align:right">142</td>
-                            <td class="mono" style="text-align:right">$2,556</td>
-                            <td style="text-align:right"><span class="stat-delta up">+6%</span></td>
-                        </tr>
-                        <tr class="hov">
-                            <td style="font-weight:500">Hair Color</td>
-                            <td class="mono" style="text-align:right">96</td>
-                            <td class="mono" style="text-align:right">$9,120</td>
-                            <td style="text-align:right"><span class="stat-delta up">+18%</span></td>
-                        </tr>
-                        <tr class="hov">
-                            <td style="font-weight:500">Facial Treatment</td>
-                            <td class="mono" style="text-align:right">73</td>
-                            <td class="mono" style="text-align:right">$5,694</td>
-                            <td style="text-align:right"><span class="stat-delta up">+4%</span></td>
-                        </tr>
-                        <tr class="hov">
-                            <td style="font-weight:500">Manicure</td>
-                            <td class="mono" style="text-align:right">68</td>
-                            <td class="mono" style="text-align:right">$2,176</td>
-                            <td style="text-align:right"><span class="stat-delta down">-2%</span></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-avatar">RK</div>
+                        <div class="activity-body">
+                            <div class="line"><strong>Rajan Karki</strong> registered <a href="#">Fixit Garage</a></div>
+                            <div class="time">7h ago</div>
+                        </div>
+                        <span class="badge-activity">activity</span>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-avatar">LP</div>
+                        <div class="activity-body">
+                            <div class="line"><strong>Lina Park</strong> completed booking at <a href="#">Sharp Salon</a></div>
+                            <div class="time">9h ago</div>
+                        </div>
+                        <span class="badge-activity">activity</span>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-avatar">AM</div>
+                        <div class="activity-body">
+                            <div class="line"><strong>Anusha Maharjan</strong> added a new service at <a href="#">Zen Healing</a></div>
+                            <div class="time">7h ago</div>
+                        </div>
+                        <span class="badge-activity">activity</span>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-avatar">TR</div>
+                        <div class="activity-body">
+                            <div class="line"><strong>Tomas Reiner</strong> created a client account</div>
+                            <div class="time">1d ago</div>
+                        </div>
+                        <span class="badge-activity">activity</span>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-avatar">MS</div>
+                        <div class="activity-body">
+                            <div class="line"><strong>Mausam Shrestha</strong> updated availability</div>
+                            <div class="time">1d ago</div>
+                        </div>
+                        <span class="badge-activity">activity</span>
+                    </div>
+                </div>
             </div>
-        </main>
-    </div>
 
-    <!-- ===== Bar Chart Script ===== -->
-    <script>
-        const data = [
-            { day: 'Mon', count: 28 },
-            { day: 'Tue', count: 34 },
-            { day: 'Wed', count: 31 },
-            { day: 'Thu', count: 42 },
-            { day: 'Fri', count: 56 },
-            { day: 'Sat', count: 64 },
-            { day: 'Sun', count: 22 },
-        ];
-
-        const max = Math.max(...data.map(d => d.count));
-        const chart = document.getElementById('bar-chart');
-
-        data.forEach(d => {
-            const col = document.createElement('div');
-            col.className = 'bar-col';
-
-            const wrap = document.createElement('div');
-            wrap.className = 'bar-wrap';
-
-            const bar = document.createElement('div');
-            bar.className = 'bar';
-            bar.style.height = (d.count / max * 100) + '%';
-
-            const val = document.createElement('div');
-            val.className = 'bar-value';
-            val.textContent = d.count;
-            bar.appendChild(val);
-
-            wrap.appendChild(bar);
-
-            const label = document.createElement('div');
-            label.className = 'bar-label';
-            label.textContent = d.day;
-
-            col.appendChild(wrap);
-            col.appendChild(label);
-            chart.appendChild(col);
-        });
-    </script>
-
+            <div class="card" id="card-businesses">
+                <div style="padding:16px 20px; border-bottom:1px solid var(--border)">
+                    <h3 class="h3" style="font-size:15px">Businesses on SlotSync</h3>
+                    <div class="muted tiny" style="margin-top:2px">3 total</div>
+                </div>
+                <div class="biz-list">
+                    <div class="biz-item">
+                        <div class="biz-icon">&#9986;&#65039;</div>
+                        <div class="biz-info">
+                            <div class="biz-name">Sharp Salon</div>
+                            <div class="biz-owner">Tiraj Basnet</div>
+                        </div>
+                        <span class="badge badge-green"><span class="badge-dot"></span> active</span>
+                    </div>
+                    <div class="biz-item">
+                        <div class="biz-icon">&#127807;</div>
+                        <div class="biz-info">
+                            <div class="biz-name">Zen Healing</div>
+                            <div class="biz-owner">Anusha Maharjan</div>
+                        </div>
+                        <span class="badge badge-green"><span class="badge-dot"></span> active</span>
+                    </div>
+                    <div class="biz-item">
+                        <div class="biz-icon">&#128295;</div>
+                        <div class="biz-info">
+                            <div class="biz-name">Fixit Garage</div>
+                            <div class="biz-owner">Rajan Karki</div>
+                        </div>
+                        <span class="badge badge-amber"><span class="badge-dot"></span> pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
 </body>
 </html>
