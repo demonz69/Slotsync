@@ -144,6 +144,22 @@ a:hover { text-decoration: underline; }
 .auth-card h2 { font-size: 24px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
 .auth-card .sub { color: var(--text-2); font-size: 14px; margin-bottom: 28px; }
 .auth-foot { margin-top: 22px; text-align: center; font-size: 14px; color: var(--text-2); }
+/* Role selector chips */
+.role-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.role-chip {
+  padding: 10px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-2);
+  text-align: center;
+  transition: all 0.12s;
+  cursor: pointer;
+}
+.role-chip:hover { border-color: var(--border-strong); color: var(--text); }
+.role-chip.active { border-color: var(--blue); color: var(--blue-700); background: var(--blue-50); }
+.role-chip input[type="radio"] { display: none; }
 /* SVG Icons inline */
 .icon-svg {
   display: inline-flex;
