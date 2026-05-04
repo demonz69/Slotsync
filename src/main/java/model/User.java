@@ -4,8 +4,11 @@ public class User {
     private int userId;
     private String fullName;
     private String email;
+    private String phone;
     private String password;
-    private String role;
+    private int roleId;
+    private String role; // role_name from roles table
+    private String status;
 
     // Getters and Setters
     public int getUserId() {
@@ -46,5 +49,29 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public int getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(int roleId) {
+        this.roleId = roleId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
