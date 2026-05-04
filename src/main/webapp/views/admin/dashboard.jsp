@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.User" %>
+<%@ page import="model.User, dao.UserDAO, dao.BusinessDAO, dao.AppointmentDAO" %>
 <%
     User user = (User) session.getAttribute("user");
     if (user == null) {
@@ -10,6 +10,15 @@
         response.sendRedirect(request.getContextPath() + "/views/user/home.jsp");
         return;
     }
+
+    BusinessDAO bizDAO = new BusinessDAO();
+    UserDAO userDAO = new UserDAO();
+    AppointmentDAO apptDAO = new AppointmentDAO();
+
+    int totalBusinesses = bizDAO.countAllBusinesses();
+    int pendingBusinesses = bizDAO.countPendingBusinesses();
+    int totalUsers = userDAO.countAllUsers();
+    int totalBookings = apptDAO.countAllAppointments();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -108,7 +117,7 @@
         <div class="stat-row animate-in">
             <div class="stat-card" id="stat-businesses">
                 <div class="stat-label">Total Businesses</div>
-                <div class="stat-value mono">3</div>
+                <div class="stat-value mono"><%= totalBusinesses %></div>
                 <div class="stat-delta up">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
                     +1 this month
@@ -116,7 +125,7 @@
             </div>
             <div class="stat-card" id="stat-users">
                 <div class="stat-label">Total Users</div>
-                <div class="stat-value mono">1,284</div>
+                <div class="stat-value mono"><%= totalUsers %></div>
                 <div class="stat-delta up">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
                     +38 this week
@@ -124,7 +133,7 @@
             </div>
             <div class="stat-card" id="stat-bookings">
                 <div class="stat-label">Total Bookings</div>
-                <div class="stat-value mono">4,712</div>
+                <div class="stat-value mono"><%= totalBookings %></div>
                 <div class="stat-delta up">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
                     +12.4%
@@ -132,7 +141,7 @@
             </div>
             <div class="stat-card" id="stat-pending">
                 <div class="stat-label">Pending Approvals</div>
-                <div class="stat-value mono">2</div>
+                <div class="stat-value mono"><%= pendingBusinesses %></div>
                 <div class="stat-delta neutral">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     <a href="${pageContext.request.contextPath}/views/admin/manage-businesses.jsp" style="color:inherit; text-decoration:none">check review</a>
