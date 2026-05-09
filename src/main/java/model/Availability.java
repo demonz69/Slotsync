@@ -3,21 +3,24 @@ package model;
 public class Availability {
     private int availabilityId;
     private int employeeId;
-    private String dayOfWeek;   
-    private String startTime;   
-    private String endTime;     
-    private int slotDuration;   
+    private int businessId;      // NAYA THAPEKO
+    private String dayOfWeek;
+    private String startTime;
+    private String endTime;
+    private int slotDuration;
 
     public Availability() {}
 
-    public Availability(int availabilityId, int employeeId, String dayOfWeek,
-                        String startTime, String endTime, int slotDuration) {
+    public Availability(int availabilityId, int employeeId, int businessId,
+                        String dayOfWeek, String startTime,
+                        String endTime, int slotDuration) {
         this.availabilityId = availabilityId;
-        this.employeeId = employeeId;
-        this.dayOfWeek = dayOfWeek;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.slotDuration = slotDuration;
+        this.employeeId     = employeeId;
+        this.businessId     = businessId;
+        this.dayOfWeek      = dayOfWeek;
+        this.startTime      = startTime;
+        this.endTime        = endTime;
+        this.slotDuration   = slotDuration;
     }
 
     public int getAvailabilityId() { return availabilityId; }
@@ -25,6 +28,9 @@ public class Availability {
 
     public int getEmployeeId() { return employeeId; }
     public void setEmployeeId(int employeeId) { this.employeeId = employeeId; }
+
+    public int getBusinessId() { return businessId; }
+    public void setBusinessId(int businessId) { this.businessId = businessId; }
 
     public String getDayOfWeek() { return dayOfWeek; }
     public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
