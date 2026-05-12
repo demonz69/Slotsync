@@ -178,6 +178,80 @@ public class AppointmentDAO {
         return null;
     }
 
+    // Get available unbooked slots for an employee on a specific date
+    public List<String> getAvailableSlots(int employeeId, String date) {
+
+        // Step 1: Convert date to day name e.g. "2026-05-11" -> "Sunday"
+        String dayName = "";
+        try {
+            java.time.LocalDate localDate = java.time.LocalDate.parse(date);
+            dayName = localDate.getDayOfWeek()
+                               .getDisplayName(
+                                   java.time.format.TextStyle.FULL,
+                                   java.util.Locale.ENGLISH
+                               );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        // Step 2: Get employee shift for that day from availability table
+        String availSql = "SELECT start_time, end_time, slot_duration " +
+                          "FROM availability " +
+                          "WHERE employee_id = ? AND day_of_week = ?";
+
+        List<String> allSlots = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(availSql)) {
+
+            ps.setInt(1, employeeId);
+            ps.setString(2, dayName);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                String start    = rs.getString("start_time");
+                String end      = rs.getString("end_time");
+                int    duration = rs.getInt("slot_duration");
+
+                // Step 3: Generate all slots from start to end
+                java.time.LocalTime current = java.time.LocalTime.parse(start);
+                java.time.LocalTime endTime = java.time.LocalTime.parse(end);
+
+                while (!current.plusMinutes(duration).isAfter(endTime)) {
+                    allSlots.add(current.toString());
+                    current = current.plusMinutes(duration);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Step 4: Remove already booked slots
+        String bookedSql = "SELECT slot_time FROM appointments " +
+                           "WHERE employee_id = ? " +
+                           "AND appointment_date = ? " +
+                           "AND status != 'cancelled'";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(bookedSql)) {
+
+            ps.setInt(1, employeeId);
+            ps.setString(2, date);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                allSlots.remove(rs.getString("slot_time"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Step 5: Return only free slots
+        return allSlots;
+    }
+
     // Private helper — maps one DB row to Appointment object
     private Appointment mapRow(ResultSet rs) throws SQLException {
         return new Appointment(
