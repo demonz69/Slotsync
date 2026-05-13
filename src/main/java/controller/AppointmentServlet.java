@@ -4,7 +4,6 @@ import dao.AppointmentDAO;
 import dao.AvailabilityDAO;
 import dao.EmployeeDAO;
 import model.Appointment;
-import model.Availability;
 import model.Employee;
 import util.SlotGenerator;
 
@@ -21,15 +20,11 @@ public class AppointmentServlet extends HttpServlet {
     private final AvailabilityDAO availabilityDAO = new AvailabilityDAO();
     private final EmployeeDAO employeeDAO = new EmployeeDAO();
 
-    // ─────────────────────────────────────────────
-    // doPost — handles book and cancel actions
-    // ─────────────────────────────────────────────
     @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Check session — redirect to login if not logged in
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
             response.sendRedirect(request.getContextPath() + "/login.jsp");
@@ -49,20 +44,24 @@ public class AppointmentServlet extends HttpServlet {
                 handleCancel(request, response, session);
                 break;
 
+            case "assign":
+                handleAssign(request, response, session);
+                break;
+
+            case "updateStatus":
+                handleUpdateStatus(request, response, session);
+                break;
+
             default:
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
         }
     }
 
-    // ─────────────────────────────────────────────
-    // doGet — loads available slots for a date
-    // ─────────────────────────────────────────────
     @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Check session
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
             response.sendRedirect(request.getContextPath() + "/login.jsp");
@@ -83,19 +82,14 @@ public class AppointmentServlet extends HttpServlet {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // PRIVATE: handle booking a new appointment
-    // ─────────────────────────────────────────────
     private void handleBook(HttpServletRequest request,
                             HttpServletResponse response,
                             HttpSession session)
             throws ServletException, IOException {
 
         try {
-            // Get logged-in client ID from session
             int clientId = (int) session.getAttribute("userId");
 
-            // Get form values
             String employeeIdStr = request.getParameter("employeeId");
             String serviceIdStr  = request.getParameter("serviceId");
             String businessIdStr = request.getParameter("businessId");
@@ -103,182 +97,174 @@ public class AppointmentServlet extends HttpServlet {
             String slotTime      = request.getParameter("slotTime");
             String notes         = request.getParameter("notes");
 
-            // Basic validation — all fields must be filled
             if (employeeIdStr == null || serviceIdStr == null ||
                 businessIdStr == null || date == null ||
                 slotTime == null || date.isEmpty() || slotTime.isEmpty()) {
 
                 session.setAttribute("errorMsg", "All fields are required.");
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/client/booking.jsp");
+                        "/views/client/booking.jsp");
                 return;
             }
 
-            // Cannot book a past date
             if (SlotGenerator.isPastDate(date)) {
-                session.setAttribute("errorMsg",
-                                     "Cannot book an appointment in the past.");
+                session.setAttribute("errorMsg", "Cannot book past date.");
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/client/booking.jsp");
+                        "/views/client/booking.jsp");
                 return;
             }
 
-            int employeeId = Integer.parseInt(employeeIdStr);
-            int serviceId  = Integer.parseInt(serviceIdStr);
-            int businessId = Integer.parseInt(businessIdStr);
-
-            // Build Appointment object
             Appointment apt = new Appointment();
             apt.setClientId(clientId);
-            apt.setEmployeeId(employeeId);
-            apt.setServiceId(serviceId);
-            apt.setBusinessId(businessId);
+            apt.setEmployeeId(Integer.parseInt(employeeIdStr));
+            apt.setServiceId(Integer.parseInt(serviceIdStr));
+            apt.setBusinessId(Integer.parseInt(businessIdStr));
             apt.setAppointmentDate(date);
             apt.setSlotTime(slotTime);
             apt.setNotes(notes != null ? notes : "");
             apt.setStatus("pending");
 
-            // Save to database
             boolean success = appointmentDAO.bookAppointment(apt);
 
             if (success) {
-                session.setAttribute("successMsg",
-                                     "Appointment booked successfully!");
+                session.setAttribute("successMsg", "Booked successfully.");
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/client/bookings.jsp");
+                        "/views/client/bookings.jsp");
             } else {
-                session.setAttribute("errorMsg",
-                                     "Booking failed. Please try again.");
+                session.setAttribute("errorMsg", "Booking failed.");
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/client/booking.jsp");
+                        "/views/client/booking.jsp");
             }
 
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            session.setAttribute("errorMsg", "Invalid input. Please try again.");
+        } catch (Exception e) {
+            session.setAttribute("errorMsg", "Invalid input.");
             response.sendRedirect(request.getContextPath() +
-                                  "/views/client/booking.jsp");
+                    "/views/client/booking.jsp");
         }
     }
 
-    // ─────────────────────────────────────────────
-    // PRIVATE: handle cancelling an appointment
-    // ─────────────────────────────────────────────
     private void handleCancel(HttpServletRequest request,
                               HttpServletResponse response,
                               HttpSession session)
-            throws ServletException, IOException {
+            throws IOException {
 
         try {
-            int clientId       = (int) session.getAttribute("userId");
-            String role        = (String) session.getAttribute("role");
-            int appointmentId  = Integer.parseInt(
-                                     request.getParameter("appointmentId"));
+            int appointmentId = Integer.parseInt(
+                    request.getParameter("appointmentId"));
 
-            // Get the appointment to verify ownership
             Appointment apt = appointmentDAO.getAppointmentById(appointmentId);
 
             if (apt == null) {
-                session.setAttribute("errorMsg", "Appointment not found.");
+                session.setAttribute("errorMsg", "Not found.");
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/client/bookings.jsp");
+                        "/views/client/bookings.jsp");
                 return;
             }
 
-            // Only the client who booked OR owner/admin can cancel
-            boolean isOwner  = "owner".equals(role) || "admin".equals(role);
+            String role = (String) session.getAttribute("role");
+            int clientId = (int) session.getAttribute("userId");
+
+            boolean isOwner = "owner".equals(role) || "admin".equals(role);
             boolean isClient = apt.getClientId() == clientId;
 
-            if (!isClient && !isOwner) {
-                session.setAttribute("errorMsg",
-                                     "You are not authorized to cancel this appointment.");
+            if (!isOwner && !isClient) {
+                session.setAttribute("errorMsg", "Not allowed.");
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/client/bookings.jsp");
+                        "/views/client/bookings.jsp");
                 return;
             }
 
-            boolean success = appointmentDAO.cancelAppointment(appointmentId);
+            appointmentDAO.cancelAppointment(appointmentId);
 
-            if (success) {
-                session.setAttribute("successMsg",
-                                     "Appointment cancelled successfully.");
-            } else {
-                session.setAttribute("errorMsg",
-                                     "Cancel failed. Please try again.");
-            }
-
-            // Redirect based on role
             if (isOwner) {
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/owner/appointments.jsp");
+                        "/views/owner/appointments.jsp");
             } else {
                 response.sendRedirect(request.getContextPath() +
-                                      "/views/client/bookings.jsp");
+                        "/views/client/bookings.jsp");
             }
 
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            session.setAttribute("errorMsg", "Invalid appointment ID.");
+        } catch (Exception e) {
+            session.setAttribute("errorMsg", "Invalid request.");
             response.sendRedirect(request.getContextPath() +
-                                  "/views/client/bookings.jsp");
+                    "/views/client/bookings.jsp");
         }
     }
 
-    // ─────────────────────────────────────────────
-    // PRIVATE: load available slots for employee+date
-    // ─────────────────────────────────────────────
     private void handleLoadSlots(HttpServletRequest request,
                                  HttpServletResponse response,
                                  HttpSession session)
             throws ServletException, IOException {
 
         try {
-            String employeeIdStr = request.getParameter("employeeId");
-            String date          = request.getParameter("date");
+            int employeeId = Integer.parseInt(
+                    request.getParameter("employeeId"));
 
-            // Validate inputs
-            if (employeeIdStr == null || date == null ||
-                employeeIdStr.isEmpty() || date.isEmpty()) {
+            String date = request.getParameter("date");
 
-                request.setAttribute("errorMsg",
-                                     "Please select an employee and date.");
-                request.getRequestDispatcher(
-                    "/views/client/booking.jsp").forward(request, response);
-                return;
-            }
+            List<String> slots =
+                    appointmentDAO.getAvailableSlots(employeeId, date);
 
-            // Cannot load slots for past date
-            if (SlotGenerator.isPastDate(date)) {
-                request.setAttribute("errorMsg",
-                                     "Please select a future date.");
-                request.getRequestDispatcher(
-                    "/views/client/booking.jsp").forward(request, response);
-                return;
-            }
+            Employee emp = employeeDAO.getByUserId(employeeId);
 
-            int employeeId = Integer.parseInt(employeeIdStr);
-
-            // Get available slots from AppointmentDAO
-            List<String> slots = appointmentDAO.getAvailableSlots(
-                                     employeeId, date);
-
-            // Get employee info to show on page
-            Employee employee = employeeDAO.getByUserId(employeeId);
-
-            // Send data to JSP
-            request.setAttribute("slots",      slots);
-            request.setAttribute("employee",   employee);
-            request.setAttribute("date",       date);
-            request.setAttribute("employeeId", employeeId);
+            request.setAttribute("slots", slots);
+            request.setAttribute("employee", emp);
+            request.setAttribute("date", date);
 
             request.getRequestDispatcher(
-                "/views/client/booking.jsp").forward(request, response);
+                    "/views/client/booking.jsp"
+            ).forward(request, response);
 
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            request.setAttribute("errorMsg", "Invalid employee ID.");
+        } catch (Exception e) {
+            request.setAttribute("errorMsg", "Invalid data.");
             request.getRequestDispatcher(
-                "/views/client/booking.jsp").forward(request, response);
+                    "/views/client/booking.jsp"
+            ).forward(request, response);
         }
+    }
+
+    private void handleAssign(HttpServletRequest request,
+                              HttpServletResponse response,
+                              HttpSession session)
+            throws IOException {
+
+        String role = (String) session.getAttribute("role");
+        if (!"owner".equals(role) && !"admin".equals(role)) {
+            response.sendRedirect(request.getContextPath() +
+                    "/views/owner/appointments.jsp");
+            return;
+        }
+
+        int appointmentId = Integer.parseInt(
+                request.getParameter("appointmentId"));
+        int employeeId = Integer.parseInt(
+                request.getParameter("employeeId"));
+
+        appointmentDAO.assignEmployee(appointmentId, employeeId);
+
+        response.sendRedirect(request.getContextPath() +
+                "/views/owner/appointments.jsp");
+    }
+
+    private void handleUpdateStatus(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    HttpSession session)
+            throws IOException {
+
+        String role = (String) session.getAttribute("role");
+        if (!"owner".equals(role) && !"admin".equals(role)) {
+            response.sendRedirect(request.getContextPath() +
+                    "/views/owner/appointments.jsp");
+            return;
+        }
+
+        int appointmentId = Integer.parseInt(
+                request.getParameter("appointmentId"));
+        String status = request.getParameter("status");
+
+        appointmentDAO.updateStatus(appointmentId, status);
+
+        response.sendRedirect(request.getContextPath() +
+                "/views/owner/appointments.jsp");
     }
 }
