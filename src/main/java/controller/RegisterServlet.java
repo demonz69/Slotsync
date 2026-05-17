@@ -18,8 +18,16 @@ public class RegisterServlet extends HttpServlet {
 
         String fullName = request.getParameter("fullName");
         String email = request.getParameter("email");
+        String phone = request.getParameter("phone");
         String password = request.getParameter("password");
-        String role = "client"; // default role
+        String requestedRole = request.getParameter("role");
+        int roleId = 4; // default role: 4 is client
+        
+        if ("employee".equals(requestedRole)) {
+            roleId = 3; // 3 is employee, 2 is owner
+        } else if ("client".equals(requestedRole)) {
+            roleId = 4;
+        }
 
         // VALIDATION
         if (!ValidationUtil.isValidName(fullName)) {
@@ -30,6 +38,12 @@ public class RegisterServlet extends HttpServlet {
 
         if (!ValidationUtil.isValidEmail(email)) {
             request.setAttribute("error", "Invalid email format");
+            request.getRequestDispatcher("views/auth/register.jsp").forward(request, response);
+            return;
+        }
+
+        if (phone == null || phone.trim().isEmpty()) {
+            request.setAttribute("error", "Phone number is required");
             request.getRequestDispatcher("views/auth/register.jsp").forward(request, response);
             return;
         }
@@ -56,8 +70,9 @@ public class RegisterServlet extends HttpServlet {
         User user = new User();
         user.setFullName(fullName);
         user.setEmail(email);
+        user.setPhone(phone);
         user.setPassword(encryptedPassword);
-        user.setRole(role);
+        user.setRoleId(roleId);
 
         // SAVE USER
         boolean success = dao.register(user);

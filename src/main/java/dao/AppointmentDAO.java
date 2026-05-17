@@ -199,6 +199,7 @@ public class AppointmentDAO {
         return allSlots;
     }
 
+<<<<<<< HEAD
     private Appointment mapRow(ResultSet rs) throws SQLException {
         return new Appointment(
             rs.getInt("appointment_id"),
@@ -212,5 +213,23 @@ public class AppointmentDAO {
             rs.getString("notes"),
             rs.getString("created_at")
         );
+=======
+    public List<String> getAll() { return booked; }
+
+    public int countAllAppointments() {
+        int count = 0;
+        try {
+            java.sql.Connection con = DBConnection.getConnection();
+            java.sql.PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM appointments");
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+            con.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count;
+>>>>>>> d04e54feed6267f85b167362bab4a2dda10d0694
     }
 }
