@@ -1,0 +1,152 @@
+/* SlotSync - Siddhant Tamrakar's Part */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    background: #f5f7fa;
+    color: #1e293b;
+    line-height: 1.5;
+}
+
+/* ── Layout ── */
+.layout { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+    width: 210px;
+    background: #1e293b;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebar-brand {
+    padding: 18px 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0d9488;
+    border-bottom: 1px solid #334155;
+}
+
+.sidebar nav a {
+    display: block;
+    padding: 11px 20px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.sidebar nav a:hover  { background: rgba(255,255,255,0.06); color: #fff; }
+.sidebar nav a.active { background: #0d9488; color: #fff; }
+
+.sidebar-foot {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid #334155;
+}
+
+.sidebar-foot a {
+    display: block;
+    padding: 9px 12px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: 6px;
+}
+
+.sidebar-foot a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+
+/* ── Main ── */
+.main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+
+/* ── Page header ── */
+.page-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.page-head h1 { font-size: 20px; font-weight: 700; }
+.page-head p  { color: #64748b; font-size: 13px; margin-top: 3px; }
+
+/* ── Alerts ── */
+.alert { padding: 11px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; }
+.alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+.alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+/* ── Card ── */
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 22px; }
+.card-head { padding: 14px 18px; border-bottom: 1px solid #e2e8f0; }
+.card-head h3 { font-size: 14px; font-weight: 600; }
+.card-head p  { font-size: 12px; color: #64748b; margin-top: 2px; }
+.card-body { padding: 18px; }
+
+/* ── Stat cards ── */
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+.stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; }
+.stat-card .s-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px; }
+.stat-card .s-value { font-size: 26px; font-weight: 700; color: #0d9488; }
+.stat-card .s-sub   { font-size: 12px; color: #94a3b8; margin-top: 3px; }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; }
+thead th { background: #f8fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #f8fafc; }
+
+/* ── Search bar ── */
+.search-bar { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; gap: 10px; align-items: center; }
+.search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: Arial, sans-serif; outline: none; }
+.search-bar input:focus { border-color: #0d9488; }
+
+/* ── Tabs ── */
+.tabs { display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 18px; }
+.tab { padding: 9px 18px; text-decoration: none; color: #64748b; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600; }
+.tab:hover  { color: #0d9488; }
+.tab.active { color: #0d9488; border-bottom-color: #0d9488; }
+
+/* ── Badges ── */
+.badge       { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-red   { background: #fee2e2; color: #991b1b; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-blue  { background: #dbeafe; color: #1e40af; }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; border-radius: 6px; border: none; font-size: 13px; font-weight: 500; font-family: Arial, sans-serif; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.btn-primary   { background: #0d9488; color: #fff; }
+.btn-primary:hover { background: #0f766e; }
+.btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.btn-secondary:hover { background: #e2e8f0; }
+.btn-danger    { background: #fee2e2; color: #991b1b; }
+.btn-danger:hover { background: #fecaca; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ── Form fields ── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: #475569; }
+.field input, .field select, .field textarea { padding: 8px 11px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: Arial, sans-serif; outline: none; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #0d9488; }
+.field textarea { resize: vertical; min-height: 72px; }
+.row-fields { display: flex; gap: 10px; }
+.row-fields .field { flex: 1; }
+
+/* ── Grid ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+/* ── Modal ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 10px; width: 460px; max-width: 95vw; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
+.modal-head h3 { font-size: 15px; font-weight: 600; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #94a3b8; line-height: 1; }
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid #e2e8f0; }
+
+/* ── Misc ── */
+.empty-state { padding: 50px 20px; text-align: center; color: #94a3b8; font-size: 13px; }
+.stars  { color: #f59e0b; }
+.right  { text-align: right; }
+.center { text-align: center; }
+.muted  { color: #64748b; }
+.small  { font-size: 12px; }
+.bold   { font-weight: 600; }
