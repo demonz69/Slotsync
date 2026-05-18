@@ -1,7 +1,7 @@
 package dao;
 
 import model.Appointment;
-import util.DBConnection;
+import dao.DBConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -52,15 +52,24 @@ public class AppointmentDAO {
     // Get all appointments for a specific client
     public List<Appointment> getAppointmentsByUser(int clientId) {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT * FROM appointments WHERE client_id = ? " +
-                     "ORDER BY appointment_date DESC, slot_time ASC";
+        String sql = "SELECT a.*, s.service_name, s.price, u.full_name AS employee_name " +
+                     "FROM appointments a " +
+                     "LEFT JOIN services s ON a.service_id = s.service_id " +
+                     "LEFT JOIN employees e ON a.employee_id = e.employee_id " +
+                     "LEFT JOIN users u ON e.user_id = u.user_id " +
+                     "WHERE a.client_id = ? " +
+                     "ORDER BY a.appointment_date DESC, a.slot_time ASC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, clientId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapRow(rs));
+                Appointment apt = mapRow(rs);
+                apt.setServiceName(rs.getString("service_name"));
+                apt.setPrice(rs.getDouble("price"));
+                apt.setEmployeeName(rs.getString("employee_name"));
+                list.add(apt);
             }
 
         } catch (SQLException e) {
@@ -252,8 +261,6 @@ public class AppointmentDAO {
         return allSlots;
     }
 
-    public List<String> getAll() { return booked; }
-
     public int countAllAppointments() {
         int count = 0;
         try {
@@ -268,5 +275,21 @@ public class AppointmentDAO {
             e.printStackTrace();
         }
         return count;
+    }
+
+    // Private helper — maps one DB row to an Appointment object
+    private Appointment mapRow(ResultSet rs) throws SQLException {
+        return new Appointment(
+            rs.getInt("appointment_id"),
+            rs.getInt("client_id"),
+            rs.getInt("employee_id"),
+            rs.getInt("service_id"),
+            rs.getInt("business_id"),
+            rs.getString("appointment_date"),
+            rs.getString("slot_time"),
+            rs.getString("status"),
+            rs.getString("notes"),
+            rs.getString("created_at")
+        );
     }
 }

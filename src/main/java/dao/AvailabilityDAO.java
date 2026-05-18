@@ -1,7 +1,7 @@
 package dao;
 
 import model.Availability;
-import util.DBConnection;
+import dao.DBConnection;
 
 import java.sql.*;
 import java.util.ArrayList;

@@ -6,9 +6,9 @@ import dao.ServiceDAO;
 import model.Appointment;
 import model.Service;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -47,7 +47,7 @@ public class AppointmentController extends HttpServlet {
             case "getSlots":
                 int empId = Integer.parseInt(request.getParameter("employeeId"));
                 String date = request.getParameter("date");
-                List<String> slots = availabilityDAO.getAvailableSlots(empId, date);
+                List<String> slots = appointmentDAO.getAvailableSlots(empId, date);
                 request.setAttribute("slots", slots);
                 request.setAttribute("employeeId", empId);
                 request.setAttribute("date", date);

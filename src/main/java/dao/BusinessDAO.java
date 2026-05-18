@@ -60,7 +60,7 @@ public class BusinessDAO {
             return false;
         }
     }
-    
+
     // Count active businesses
     public int countActiveBusinesses() {
         int count = 0;
@@ -91,6 +91,31 @@ public class BusinessDAO {
             e.printStackTrace();
         }
         return count;
+    }
+
+    // Get businesses owned by a specific user
+    public List<Business> getBusinessesByOwner(int ownerId) {
+        List<Business> list = new ArrayList<>();
+        try {
+            String query = "SELECT b.*, u.full_name AS owner_name FROM businesses b " +
+                           "JOIN users u ON b.owner_id = u.user_id WHERE b.owner_id = ? " +
+                           "ORDER BY b.business_id DESC";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setInt(1, ownerId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Business b = new Business();
+                b.setBusinessId(rs.getInt("business_id"));
+                b.setName(rs.getString("business_name"));
+                b.setOwnerName(rs.getString("owner_name"));
+                b.setAddress(rs.getString("address"));
+                b.setStatus(rs.getString("status"));
+                list.add(b);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     // Count pending businesses

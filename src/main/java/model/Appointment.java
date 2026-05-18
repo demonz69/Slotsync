@@ -35,6 +35,10 @@ public class Appointment {
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
 
+    // Alias — DB column is "client_id", DAO/Servlet use this name
+    public int getClientId() { return userId; }
+    public void setClientId(int clientId) { this.userId = clientId; }
+
     public int getEmployeeId() { return employeeId; }
     public void setEmployeeId(int employeeId) { this.employeeId = employeeId; }
 
@@ -58,6 +62,24 @@ public class Appointment {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    // Display fields
+    private String serviceName;
+    private String employeeName;
+    private String businessName;
+    private double price;
+
+    public String getServiceName() { return serviceName; }
+    public void setServiceName(String serviceName) { this.serviceName = serviceName; }
+
+    public String getEmployeeName() { return employeeName; }
+    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+
+    public String getBusinessName() { return businessName; }
+    public void setBusinessName(String businessName) { this.businessName = businessName; }
+
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
     @Override
     public String toString() {

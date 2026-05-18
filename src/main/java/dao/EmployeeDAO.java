@@ -1,7 +1,7 @@
 package dao;
 
 import model.Employee;
-import util.DBConnection;
+import dao.DBConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -31,14 +31,18 @@ public class EmployeeDAO {
     // Get all employees belonging to a specific business (for owner dashboard)
     public List<Employee> getByBusinessId(int businessId) {
         List<Employee> list = new ArrayList<>();
-        String sql = "SELECT * FROM employees WHERE business_id = ? AND status = 'active'";
+        String sql = "SELECT e.*, u.full_name FROM employees e " +
+                     "JOIN users u ON e.user_id = u.user_id " +
+                     "WHERE e.business_id = ? AND e.status = 'active'";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, businessId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapRow(rs));
+                Employee emp = mapRow(rs);
+                emp.setFullName(rs.getString("full_name"));
+                list.add(emp);
             }
 
         } catch (SQLException e) {
@@ -57,6 +61,28 @@ public class EmployeeDAO {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return mapRow(rs);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // Get one employee by employee_id (used in booking flow)
+    public Employee getById(int employeeId) {
+        String sql = "SELECT e.*, u.full_name FROM employees e " +
+                     "JOIN users u ON e.user_id = u.user_id " +
+                     "WHERE e.employee_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, employeeId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Employee emp = mapRow(rs);
+                emp.setFullName(rs.getString("full_name"));
+                return emp;
             }
 
         } catch (SQLException e) {

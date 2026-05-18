@@ -161,4 +161,33 @@ public class UserDAO {
             return false;
         }
     }
+
+    // Update user profile (name, phone)
+    public boolean updateUser(User user) {
+        try {
+            String query = "UPDATE users SET full_name=?, phone=? WHERE user_id=?";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getPhone());
+            ps.setInt(3, user.getUserId());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Check if phone number already exists (for another user)
+    public boolean isPhoneExists(String phone) {
+        try {
+            String query = "SELECT * FROM users WHERE phone=?";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, phone);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

@@ -5,11 +5,11 @@ import dao.AvailabilityDAO;
 import dao.EmployeeDAO;
 import model.Appointment;
 import model.Employee;
-import util.SlotGenerator;
+import dao.SlotGenerator;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
