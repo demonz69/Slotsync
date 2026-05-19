@@ -1,6 +1,6 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.slotsync.dao.AppointmentDAO" %>
-<%@ page import="com.slotsync.model.Appointment" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="dao.AppointmentDAO" %>
+<%@ page import="model.Appointment" %>
 <%
     if (session.getAttribute("userId") == null) {
         response.sendRedirect(request.getContextPath() + "/views/login.jsp");
@@ -21,7 +21,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SlotSync ΓÇö Leave Feedback</title>
+    <title>SlotSync — Leave Feedback</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
     <style>
         .star-rating { display: flex; gap: 8px; flex-direction: row-reverse; justify-content: flex-end; margin: 8px 0; }
@@ -50,7 +50,7 @@
                 </p>
             <% } %>
 
-            <form action="<%= request.getContextPath() %>/FeedbackServlet" method="post" id="feedbackForm">
+            <form action="<%= request.getContextPath() %>/feedback" method="post" id="feedbackForm">
                 <input type="hidden" name="appointmentId" value="<%= appointmentId %>">
                 <input type="hidden" name="businessId" value="<%= appt != null ? appt.getBusinessId() : "" %>">
 

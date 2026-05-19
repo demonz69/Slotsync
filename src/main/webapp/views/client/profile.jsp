@@ -1,6 +1,6 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.slotsync.dao.UserDAO" %>
-<%@ page import="com.slotsync.model.User" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="dao.UserDAO" %>
+<%@ page import="model.User" %>
 <%
     if (session.getAttribute("userId") == null) {
         response.sendRedirect(request.getContextPath() + "/views/login.jsp");
@@ -19,7 +19,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SlotSync ΓÇö My Profile</title>
+    <title>SlotSync — My Profile</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 </head>
 <body>
@@ -36,15 +36,15 @@
     <div class="card">
         <div class="card-body">
             <div class="profile-avatar">
-                <span><%= user != null && user.getName() != null ? user.getName().substring(0, 1).toUpperCase() : "?" %></span>
+                <span><%= user != null && user.getFullName() != null ? user.getFullName().substring(0, 1).toUpperCase() : "?" %></span>
             </div>
             <% if (user != null) { %>
-            <form action="<%= request.getContextPath() %>/UserServlet" method="post" id="profileForm" novalidate>
+            <form action="<%= request.getContextPath() %>/user?action=updateProfile" method="post" id="profileForm" novalidate>
 
                 <div class="form-group">
                     <label for="name">Full Name <span class="required">*</span></label>
-                    <input type="text" id="name" name="name"
-                           value="<%= user.getName() != null ? user.getName() : "" %>"
+                    <input type="text" id="name" name="fullName"
+                           value="<%= user.getFullName() != null ? user.getFullName() : "" %>"
                            class="form-control" required>
                     <span class="error-msg" id="nameError"></span>
                 </div>
@@ -66,22 +66,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="address">Address</label>
-                    <input type="text" id="address" name="address"
-                           value="<%= user.getAddress() != null ? user.getAddress() : "" %>"
-                           class="form-control">
-                </div>
-
-                <div class="form-group">
                     <label>Role</label>
                     <input type="text" value="<%= user.getRole() != null ? user.getRole() : "" %>"
-                           class="form-control" readonly disabled>
-                </div>
-
-                <div class="form-group">
-                    <label>Member Since</label>
-                    <input type="text"
-                           value="<%= user.getCreatedAt() != null ? user.getCreatedAt().toString().substring(0, 10) : "N/A" %>"
                            class="form-control" readonly disabled>
                 </div>
 

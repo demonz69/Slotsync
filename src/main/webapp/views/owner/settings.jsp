@@ -1,6 +1,6 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.slotsync.dao.BusinessDAO" %>
-<%@ page import="com.slotsync.model.Business" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="dao.BusinessDAO" %>
+<%@ page import="model.Business" %>
 <%
     if (session.getAttribute("userId") == null || !"owner".equals(session.getAttribute("role"))) {
         response.sendRedirect(request.getContextPath() + "/views/login.jsp");
@@ -46,7 +46,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SlotSync ΓÇö Business Settings</title>
+    <title>SlotSync — Business Settings</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 </head>
 <body>

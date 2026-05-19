@@ -35,14 +35,20 @@ public class FeedbackDAO {
      */
     public List<Feedback> getFeedbackByBusiness(int businessId) {
         List<Feedback> list = new ArrayList<>();
-        String sql = "SELECT f.* FROM feedback f " +
+        String sql = "SELECT f.*, u.full_name AS client_name FROM feedback f " +
                      "JOIN appointments a ON f.appointment_id = a.appointment_id " +
+                     "JOIN users u ON f.client_id = u.user_id " +
                      "WHERE a.business_id = ? ORDER BY f.created_at DESC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, businessId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapRow(rs, businessId));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Feedback fb = mapRow(rs, businessId);
+                    fb.setClientName(rs.getString("client_name"));
+                    list.add(fb);
+                }
+            }
         } catch (SQLException e) {
             System.err.println("[FeedbackDAO] getFeedbackByBusiness: " + e.getMessage());
         }
@@ -54,15 +60,19 @@ public class FeedbackDAO {
      */
     public List<Feedback> getFeedbackByClient(int clientId) {
         List<Feedback> list = new ArrayList<>();
-        String sql = "SELECT f.*, a.business_id FROM feedback f " +
+        String sql = "SELECT f.*, a.business_id, b.business_name FROM feedback f " +
                      "JOIN appointments a ON f.appointment_id = a.appointment_id " +
+                     "JOIN businesses b ON a.business_id = b.business_id " +
                      "WHERE f.client_id = ? ORDER BY f.created_at DESC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, clientId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                list.add(mapRow(rs, rs.getInt("business_id")));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Feedback fb = mapRow(rs, rs.getInt("business_id"));
+                    fb.setBusinessName(rs.getString("business_name"));
+                    list.add(fb);
+                }
             }
         } catch (SQLException e) {
             System.err.println("[FeedbackDAO] getFeedbackByClient: " + e.getMessage());

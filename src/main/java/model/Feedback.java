@@ -8,6 +8,8 @@ public class Feedback {
     private int rating;
     private String comment;
     private String createdAt;
+    private String businessName;
+    private String clientName;
 
     public Feedback() {}
 
@@ -42,4 +44,10 @@ public class Feedback {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getBusinessName() { return businessName; }
+    public void setBusinessName(String businessName) { this.businessName = businessName; }
+
+    public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
 }

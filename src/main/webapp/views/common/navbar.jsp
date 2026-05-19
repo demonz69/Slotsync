@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page language="java" %>
 <%@ page import="model.User" %>
 <%
     // Determine the current page path for active-link highlighting
