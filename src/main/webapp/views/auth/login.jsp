@@ -49,9 +49,9 @@
                 </div>
 
                 <!-- Remember Me -->
-                <div class="field" style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="remember-me" name="remember" value="true">
-                    <label for="remember-me" style="margin: 0; font-weight: normal;">Remember me for 30 days</label>
+                <div class="field" style="display: flex; flex-direction: row; align-items: center; gap: 10px; margin-top: 4px;">
+                    <input type="checkbox" id="remember-me" name="remember" value="true" style="width: 18px; height: 18px; accent-color: var(--blue); cursor: pointer; margin: 0;">
+                    <label for="remember-me" style="margin: 0; font-weight: 400; font-size: 14px; color: var(--text-2); cursor: pointer; user-select: none;">Remember me for 30 days</label>
                 </div>
 
                 <!-- Error Message -->

@@ -94,7 +94,13 @@
                                     <td class="right">
                                         <div style="display:flex;gap:6px;justify-content:flex-end;">
                                             <button class="btn btn-secondary btn-sm"
-                                                onclick="openEdit(${s.serviceId},'${s.serviceName}',${s.categoryId},${s.durationMin},${s.price},'${s.description}')">
+                                                data-id="${s.serviceId}"
+                                                data-name="<c:out value='${s.serviceName}'/>"
+                                                data-cat="${s.categoryId}"
+                                                data-dur="${s.durationMin}"
+                                                data-price="${s.price}"
+                                                data-desc="<c:out value='${s.description}'/>"
+                                                onclick="openEdit(this)">
                                                 Edit
                                             </button>
                                             <a href="${pageContext.request.contextPath}/services?action=delete&serviceId=${s.serviceId}"
@@ -230,13 +236,13 @@
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-function openEdit(id, name, cat, dur, price, desc) {
-    document.getElementById('editId').value    = id;
-    document.getElementById('editName').value  = name;
-    document.getElementById('editCat').value   = cat;
-    document.getElementById('editDur').value   = dur;
-    document.getElementById('editPrice').value = price;
-    document.getElementById('editDesc').value  = desc;
+function openEdit(btn) {
+    document.getElementById('editId').value    = btn.getAttribute('data-id');
+    document.getElementById('editName').value  = btn.getAttribute('data-name');
+    document.getElementById('editCat').value   = btn.getAttribute('data-cat');
+    document.getElementById('editDur').value   = btn.getAttribute('data-dur');
+    document.getElementById('editPrice').value = btn.getAttribute('data-price');
+    document.getElementById('editDesc').value  = btn.getAttribute('data-desc');
     openModal('editModal');
 }
 
