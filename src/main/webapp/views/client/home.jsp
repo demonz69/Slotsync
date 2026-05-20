@@ -5,7 +5,7 @@
 <%@ page import="model.Business" %>
 <%
     if (session.getAttribute("userId") == null) {
-        response.sendRedirect(request.getContextPath() + "/views/login.jsp");
+        response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
         return;
     }
     BusinessDAO businessDAO = new BusinessDAO();
@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 </head>
 <body>
-<%@ include file="/views/common/navbar.jsp" %>
+<jsp:include page="/views/common/navbar.jsp" />
 <main class="container">
     <section class="page-header">
         <h1>Find a Service</h1>
@@ -83,6 +83,6 @@
         <% } } %>
     </div>
 </main>
-<%@ include file="/views/common/footer.jsp" %>
+<jsp:include page="/views/common/footer.jsp" />
 </body>
 </html>

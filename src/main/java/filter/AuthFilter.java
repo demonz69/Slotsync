@@ -17,10 +17,12 @@ public class AuthFilter implements Filter {
         HttpSession session = request.getSession(false);
 
         String requestURI = request.getRequestURI();
-        boolean loggedIn = (session != null && session.getAttribute("user") != null);
+        boolean loggedIn    = (session != null && session.getAttribute("user") != null);
         boolean authRequest = requestURI.contains("/views/auth/");
+        boolean publicPage  = requestURI.endsWith("/views/about.jsp")
+                           || requestURI.endsWith("/views/contact.jsp");
 
-        if (loggedIn || authRequest) {
+        if (loggedIn || authRequest || publicPage) {
             chain.doFilter(req, res);
         } else {
             response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");

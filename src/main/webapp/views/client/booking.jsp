@@ -1,222 +1,214 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, model.*, dao.*" %>
 <%
-  Integer clientId = (Integer) session.getAttribute("userId");
-  String role = (String) session.getAttribute("role");
-  if (clientId == null || !"client".equals(role)) {
-    response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
-    return;
-  }
+    User currentUser = (User) session.getAttribute("user");
+    if (currentUser == null || !"client".equals(currentUser.getRole())) {
+        response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+        return;
+    }
+    String ctx = request.getContextPath();
 
-  String stepParam = request.getParameter("step");
-  int step = (stepParam != null) ? Integer.parseInt(stepParam) : 1;
+    String stepParam = request.getParameter("step");
+    int step = (stepParam != null) ? Integer.parseInt(stepParam) : 1;
 
-  ServiceDAO serviceDAO = new ServiceDAO();
-  EmployeeDAO employeeDAO = new EmployeeDAO();
-  AppointmentDAO appointmentDAO = new AppointmentDAO();
+    ServiceDAO     serviceDAO     = new ServiceDAO();
+    EmployeeDAO    employeeDAO    = new EmployeeDAO();
+    AppointmentDAO appointmentDAO = new AppointmentDAO();
 
-  int selectedServiceId = 0;
-  int selectedEmployeeId = 0;
-  String selectedDate = request.getParameter("date");
-  String selectedSlot = request.getParameter("slotTime");
+    int    selectedServiceId  = 0;
+    int    selectedEmployeeId = 0;
+    String selectedDate  = request.getParameter("date");
+    String selectedSlot  = request.getParameter("slotTime");
 
-  if (request.getParameter("serviceId") != null && !request.getParameter("serviceId").isEmpty()) {
-      selectedServiceId = Integer.parseInt(request.getParameter("serviceId"));
-  }
-  if (request.getParameter("employeeId") != null && !request.getParameter("employeeId").isEmpty()) {
-      selectedEmployeeId = Integer.parseInt(request.getParameter("employeeId"));
-  }
+    try { selectedServiceId  = Integer.parseInt(request.getParameter("serviceId")); }  catch (Exception e) {}
+    try { selectedEmployeeId = Integer.parseInt(request.getParameter("employeeId")); } catch (Exception e) {}
+    if (selectedDate == null || selectedDate.isEmpty())
+        selectedDate = java.time.LocalDate.now().toString();
 
-  if (selectedDate == null || selectedDate.isEmpty()) {
-      selectedDate = java.time.LocalDate.now().toString();
-  }
+    List<Service>  services = (step == 1) ? serviceDAO.getAllActive() : null;
+    Service  selectedService  = (selectedServiceId  > 0) ? serviceDAO.getServiceById(selectedServiceId)   : null;
+    Employee selectedEmployee = (selectedEmployeeId > 0) ? employeeDAO.getById(selectedEmployeeId)        : null;
 
-  List<Service> services = (step == 1) ? serviceDAO.getAllActive() : null;
-  Service selectedService = (selectedServiceId > 0) ? serviceDAO.getServiceById(selectedServiceId) : null;
-  
-  List<Employee> employees = null;
-  if (step == 2 && selectedService != null) {
-      employees = employeeDAO.getByBusinessId(selectedService.getBusinessId());
-  }
-  Employee selectedEmployee = (selectedEmployeeId > 0) ? employeeDAO.getById(selectedEmployeeId) : null;
+    List<Employee> employees = null;
+    if (step == 2 && selectedService != null)
+        employees = employeeDAO.getByBusinessId(selectedService.getBusinessId());
 
-  List<String> slots = null;
-  if (step >= 3 && selectedEmployeeId > 0) {
-      slots = appointmentDAO.getAvailableSlots(selectedEmployeeId, selectedDate);
-  }
+    List<String> slots = null;
+    if (step >= 3 && selectedEmployeeId > 0)
+        slots = appointmentDAO.getAvailableSlots(selectedEmployeeId, selectedDate);
 
-  String errorMsg = null;
-  if ("POST".equalsIgnoreCase(request.getMethod()) && step == 5) {
-      try {
-          Appointment apt = new Appointment();
-          apt.setClientId(clientId);
-          apt.setEmployeeId(selectedEmployeeId);
-          apt.setServiceId(selectedServiceId);
-          apt.setBusinessId(selectedService.getBusinessId());
-          apt.setAppointmentDate(selectedDate);
-          apt.setSlotTime(selectedSlot);
-          apt.setStatus("pending");
-          apt.setNotes("");
-          
-          boolean ok = appointmentDAO.createAppointment(apt);
-          if (ok) { 
-              response.sendRedirect(request.getContextPath() + "/user?action=bookings&success=booked");
-              return;
-          } else { 
-              errorMsg = "Something went wrong. Please try again."; 
-          }
-      } catch(Exception e) {
-          e.printStackTrace();
-          errorMsg = "Error creating appointment.";
-      }
-  }
+    String errorMsg = null;
+    if ("POST".equalsIgnoreCase(request.getMethod()) && step == 5) {
+        try {
+            Appointment apt = new Appointment();
+            apt.setClientId(currentUser.getUserId());
+            apt.setEmployeeId(selectedEmployeeId);
+            apt.setServiceId(selectedServiceId);
+            apt.setBusinessId(selectedService.getBusinessId());
+            apt.setAppointmentDate(selectedDate);
+            apt.setSlotTime(selectedSlot);
+            apt.setStatus("pending");
+            apt.setNotes("");
+            if (appointmentDAO.bookAppointment(apt)) {
+                response.sendRedirect(ctx + "/views/client/bookings.jsp?success=booked");
+                return;
+            } else {
+                errorMsg = "Booking failed — slot may have been taken. Please try another.";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            errorMsg = "An error occurred. Please try again.";
+        }
+    }
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Book Appointment - SlotSync</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-  <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 30px; }
-    h1 { text-align: center; margin-bottom: 10px; }
-    .sub { text-align: center; color: #888; margin-bottom: 30px; }
-    .stepper { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
-    .step { padding: 8px 20px; border-radius: 20px; background: #ddd; font-size: 0.85rem; font-weight: 600; }
-    .step.active { background: #1a1714; color: #fff; }
-    .step.done { background: #0d9488; color: #fff; }
-    .card { background: #fff; border-radius: 12px; padding: 30px; max-width: 700px; margin: 0 auto; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-    .card h2 { margin-bottom: 5px; }
-    .card p { color: #888; margin-bottom: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-    .item { border: 2px solid #eee; border-radius: 10px; padding: 16px; text-decoration: none; color: #1a1714; display: block; }
-    .item:hover { border-color: #0d9488; background: #f0fdfa; }
-    .item .name { font-weight: 700; margin-bottom: 4px; }
-    .item .meta { font-size: 0.82rem; color: #888; }
-    .item .price { font-weight: 700; color: #0d9488; margin-top: 8px; }
-    .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px;}
-    .slot { border: 2px solid #eee; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; color: #1a1714; display: block; }
-    .slot:hover { border-color: #0d9488; background: #f0fdfa; }
-    .slot .time { font-weight: 700; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    td { padding: 12px 0; border-bottom: 1px solid #eee; }
-    td:first-child { color: #888; width: 140px; }
-    td:last-child { font-weight: 600; }
-    .btn-row { display: flex; gap: 10px; margin-top: 15px; }
-    .btn { padding: 11px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
-    .btn-dark { background: #1a1714; color: #fff; }
-    .btn-outline { background: #fff; color: #1a1714; border: 2px solid #ddd; }
-    .btn-green { background: #0d9488; color: #fff; }
-    .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; background: #fdecea; color: #c0392b; }
-    .empty { text-align: center; padding: 40px; color: #888; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: #555; }
-    .form-group input[type="date"] { padding: 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 1rem; outline: none; }
-    .form-group input[type="date"]:focus { border-color: #0d9488; }
-    .btn-submit { padding: 10px 18px; background: #1a1714; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight:600;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book an Appointment | SlotSync</title>
+    <link rel="stylesheet" href="<%= ctx %>/css/style.css">
 </head>
 <body>
+<jsp:include page="/views/common/navbar.jsp" />
 
-<h1>Book an Appointment</h1>
-<p class="sub">Complete the steps below to reserve your slot</p>
+<div class="booking-wrap">
 
-<div class="stepper">
-  <div class="step <%= step > 1 ? "done" : step == 1 ? "active" : "" %>">1. Service</div>
-  <div class="step <%= step > 2 ? "done" : step == 2 ? "active" : "" %>">2. Employee</div>
-  <div class="step <%= step > 3 ? "done" : step == 3 ? "active" : "" %>">3. Time Slot</div>
-  <div class="step <%= step == 4 || step == 5 ? "active" : "" %>">4. Confirm</div>
-</div>
-
-<div class="card">
-
-  <% if (errorMsg != null) { %><div class="alert"><%= errorMsg %></div><% } %>
-
-  <% if (step == 1) { %>
-  <h2>Choose a Service</h2>
-  <p>Select the service you'd like to book</p>
-  <% if (services == null || services.isEmpty()) { %>
-  <div class="empty">No services available at the moment.</div>
-  <% } else { %>
-  <div class="grid">
-    <% for (Service svc : services) { %>
-    <a href="?step=2&serviceId=<%= svc.getServiceId() %>" class="item">
-      <div class="name"><%= svc.getServiceName() %></div>
-      <div class="meta"><%= svc.getDuration() %> min</div>
-      <div class="price">&pound;<%= String.format("%.2f", svc.getPrice()) %></div>
-    </a>
-    <% } %>
-  </div>
-  <% } %>
-
-  <% } else if (step == 2) { %>
-  <h2>Choose a Staff Member</h2>
-  <p>Select who you'd like to be served by</p>
-  <% if (employees == null || employees.isEmpty()) { %>
-  <div class="empty">No staff available for this service.</div>
-  <% } else { %>
-  <div class="grid">
-    <% for (Employee emp : employees) { %>
-    <a href="?step=3&serviceId=<%= selectedServiceId %>&employeeId=<%= emp.getEmployeeId() %>" class="item">
-      <div class="name"><%= emp.getFullName() != null ? emp.getFullName() : "Staff #"+emp.getEmployeeId() %></div>
-      <div class="meta"><%= emp.getDesignation() %></div>
-    </a>
-    <% } %>
-  </div>
-  <% } %>
-  <div class="btn-row">
-    <a href="?step=1" class="btn btn-outline">Back</a>
-  </div>
-
-  <% } else if (step == 3) { %>
-  <h2>Pick a Date & Time Slot</h2>
-  <p>Choose an available date and time</p>
-  
-  <form method="get" action="booking.jsp" style="display:flex; gap:10px; align-items:flex-end;">
-      <input type="hidden" name="step" value="3">
-      <input type="hidden" name="serviceId" value="<%= selectedServiceId %>">
-      <input type="hidden" name="employeeId" value="<%= selectedEmployeeId %>">
-      <div class="form-group" style="margin:0;">
-          <label>Select Date:</label>
-          <input type="date" name="date" value="<%= selectedDate %>" min="<%= java.time.LocalDate.now().toString() %>" required>
+  <%-- Stepper --%>
+  <div class="steps">
+    <% String[] stepLabels = {"Service","Employee","Time slot","Confirm"};
+       for (int i = 1; i <= 4; i++) {
+           String cls = i < step ? "done" : i == step ? "active" : "";
+    %>
+    <div class="step <%= cls %>">
+      <div class="step-circle">
+        <% if (i < step) { %>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/></svg>
+        <% } else { %><%= i %><% } %>
       </div>
-      <button type="submit" class="btn-submit">Check Availability</button>
+      <div class="step-label"><%= stepLabels[i-1] %></div>
+    </div>
+    <% if (i < 4) { %><div class="step-line <%= i < step ? "done" : "" %>"></div><% } %>
+    <% } %>
+  </div>
+
+  <% if (errorMsg != null) { %>
+  <div style="background:var(--red-50);border:1px solid #fecaca;color:#b91c1c;padding:12px 16px;border-radius:6px;margin-bottom:20px;font-size:14px"><%= errorMsg %></div>
+  <% } %>
+
+  <%-- Step 1: Service --%>
+  <% if (step == 1) { %>
+  <h2 class="h2" style="margin-bottom:6px">Pick a service</h2>
+  <p class="muted" style="margin-bottom:24px">What can we help you with today?</p>
+  <% if (services == null || services.isEmpty()) { %>
+  <div style="text-align:center;padding:40px;color:var(--text-2)">No services available at the moment.</div>
+  <% } else { %>
+  <div class="service-grid">
+    <% for (Service svc : services) { %>
+    <a href="?step=2&serviceId=<%= svc.getServiceId() %>" class="service-card">
+      <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/></svg></div>
+      <div class="name"><%= svc.getServiceName() %></div>
+      <div class="meta"><%= svc.getDurationMin() %> min<% if (svc.getDescription() != null && !svc.getDescription().isEmpty()) { %> &middot; <%= svc.getDescription().length() > 30 ? svc.getDescription().substring(0,30)+"…" : svc.getDescription() %><% } %></div>
+      <div class="price mono">&pound;<%= String.format("%.2f", svc.getPrice()) %></div>
+    </a>
+    <% } %>
+  </div>
+  <% } %>
+
+  <%-- Step 2: Employee --%>
+  <% } else if (step == 2) { %>
+  <h2 class="h2" style="margin-bottom:6px">Choose an employee</h2>
+  <p class="muted" style="margin-bottom:24px">Pick a preferred specialist.</p>
+  <% if (employees == null || employees.isEmpty()) { %>
+  <div style="text-align:center;padding:40px;color:var(--text-2)">No staff available for this service. Please check back later.</div>
+  <% } else { %>
+  <div class="employee-grid">
+    <% for (Employee emp : employees) {
+           String initials = emp.getFullName() != null && !emp.getFullName().isEmpty()
+               ? emp.getFullName().trim().split("\\s+").length > 1
+                 ? ("" + emp.getFullName().trim().split("\\s+")[0].charAt(0) + emp.getFullName().trim().split("\\s+")[1].charAt(0)).toUpperCase()
+                 : ("" + emp.getFullName().charAt(0)).toUpperCase()
+               : "?";
+    %>
+    <a href="?step=3&serviceId=<%= selectedServiceId %>&employeeId=<%= emp.getEmployeeId() %>" class="employee-card">
+      <div class="avatar"><%= initials %></div>
+      <div class="grow">
+        <div style="font-weight:600"><%= emp.getFullName() != null ? emp.getFullName() : "Staff #"+emp.getEmployeeId() %></div>
+        <div class="muted small"><%= emp.getDesignation() %></div>
+      </div>
+    </a>
+    <% } %>
+  </div>
+  <% } %>
+  <div class="between" style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+    <a href="?step=1" class="btn btn-secondary">&#8592; Back</a>
+  </div>
+
+  <%-- Step 3: Date & Slot --%>
+  <% } else if (step == 3) { %>
+  <h2 class="h2" style="margin-bottom:6px">Pick a time</h2>
+  <p class="muted" style="margin-bottom:20px">Available slots with <%= selectedEmployee != null && selectedEmployee.getFullName() != null ? selectedEmployee.getFullName() : "your specialist" %>.</p>
+
+  <form method="get" action="<%= ctx %>/views/client/booking.jsp" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:24px">
+    <input type="hidden" name="step"       value="3">
+    <input type="hidden" name="serviceId"  value="<%= selectedServiceId %>">
+    <input type="hidden" name="employeeId" value="<%= selectedEmployeeId %>">
+    <div class="field" style="margin:0">
+      <label>Select Date</label>
+      <input class="input" type="date" name="date" value="<%= selectedDate %>" min="<%= java.time.LocalDate.now().toString() %>" required>
+    </div>
+    <button class="btn btn-primary" type="submit">Check availability</button>
   </form>
 
   <% if (slots == null || slots.isEmpty()) { %>
-  <div class="empty" style="padding:20px;">No slots available on this date. Try another date.</div>
+  <div style="text-align:center;padding:32px;color:var(--text-2);border:1px solid var(--border);border-radius:8px">No slots available on this date. Try a different date.</div>
   <% } else { %>
   <div class="slot-grid">
     <% for (String slotTime : slots) { %>
-    <a href="?step=4&serviceId=<%= selectedServiceId %>&employeeId=<%= selectedEmployeeId %>&date=<%= selectedDate %>&slotTime=<%= slotTime %>" class="slot">
-      <div class="time"><%= slotTime %></div>
-    </a>
+    <a href="?step=4&serviceId=<%= selectedServiceId %>&employeeId=<%= selectedEmployeeId %>&date=<%= selectedDate %>&slotTime=<%= slotTime %>"
+       class="slot"><%= slotTime %></a>
     <% } %>
   </div>
   <% } %>
-  <div class="btn-row" style="margin-top:25px;">
-    <a href="?step=2&serviceId=<%= selectedServiceId %>" class="btn btn-outline">Back</a>
+  <div class="between" style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+    <a href="?step=2&serviceId=<%= selectedServiceId %>" class="btn btn-secondary">&#8592; Back</a>
   </div>
 
+  <%-- Step 4/5: Confirm --%>
   <% } else if (step == 4 || step == 5) { %>
-  <h2>Confirm Your Booking</h2>
-  <p>Review the details before confirming</p>
-  <table>
-    <tr><td>Service</td><td><%= selectedService != null ? selectedService.getServiceName() : "-" %></td></tr>
-    <tr><td>Duration</td><td><%= selectedService != null ? selectedService.getDuration() + " min" : "-" %></td></tr>
-    <tr><td>Staff</td><td><%= selectedEmployee != null && selectedEmployee.getFullName() != null ? selectedEmployee.getFullName() : "-" %></td></tr>
-    <tr><td>Date</td><td><%= selectedDate %></td></tr>
-    <tr><td>Time</td><td><%= selectedSlot %></td></tr>
-    <tr><td>Price</td><td><%= selectedService != null ? "&pound;" + String.format("%.2f", selectedService.getPrice()) : "-" %></td></tr>
-  </table>
-  <form method="post" action="?step=5&serviceId=<%= selectedServiceId %>&employeeId=<%= selectedEmployeeId %>&date=<%= selectedDate %>&slotTime=<%= selectedSlot %>">
-    <div class="btn-row">
-      <a href="?step=3&serviceId=<%= selectedServiceId %>&employeeId=<%= selectedEmployeeId %>&date=<%= selectedDate %>" class="btn btn-outline">Back</a>
-      <button type="submit" class="btn btn-green">Confirm Booking</button>
+  <h2 class="h2" style="margin-bottom:6px">Review your booking</h2>
+  <p class="muted" style="margin-bottom:24px">One last look before we confirm.</p>
+
+  <div class="summary" style="max-width:540px;margin-bottom:20px">
+    <div class="summary-row"><span class="lbl">Service</span><span class="val"><%= selectedService != null ? selectedService.getServiceName() : "—" %></span></div>
+    <div class="summary-row"><span class="lbl">Duration</span><span class="val mono"><%= selectedService != null ? selectedService.getDurationMin()+" min" : "—" %></span></div>
+    <div class="summary-row"><span class="lbl">With</span>
+      <span class="val">
+        <% if (selectedEmployee != null) { %>
+        <span style="display:inline-flex;align-items:center;gap:8px">
+          <% String ei = selectedEmployee.getFullName() != null && !selectedEmployee.getFullName().isEmpty() ? (selectedEmployee.getFullName().trim().split("\\s+").length > 1 ? ("" + selectedEmployee.getFullName().trim().split("\\s+")[0].charAt(0) + selectedEmployee.getFullName().trim().split("\\s+")[1].charAt(0)).toUpperCase() : ("" + selectedEmployee.getFullName().charAt(0)).toUpperCase()) : "?"; %>
+          <span class="avatar" style="width:24px;height:24px;font-size:11px"><%= ei %></span>
+          <%= selectedEmployee.getFullName() %>
+        </span>
+        <% } else { %>—<% } %>
+      </span>
+    </div>
+    <div class="summary-row"><span class="lbl">Date</span><span class="val"><%= selectedDate %></span></div>
+    <div class="summary-row"><span class="lbl">Time</span><span class="val mono"><%= selectedSlot %></span></div>
+    <div class="summary-row summary-total">
+      <span class="lbl" style="font-weight:500;color:var(--text)">Total</span>
+      <span class="val">&pound;<%= selectedService != null ? String.format("%.2f", selectedService.getPrice()) : "—" %></span>
+    </div>
+  </div>
+
+  <p class="muted small" style="max-width:540px;margin-bottom:20px">By confirming, you agree to SlotSync's cancellation policy. Free reschedule up to 4 hours before.</p>
+
+  <form method="post" action="<%= ctx %>/views/client/booking.jsp?step=5&serviceId=<%= selectedServiceId %>&employeeId=<%= selectedEmployeeId %>&date=<%= selectedDate %>&slotTime=<%= selectedSlot %>">
+    <div class="between" style="padding-top:20px;border-top:1px solid var(--border)">
+      <a href="?step=3&serviceId=<%= selectedServiceId %>&employeeId=<%= selectedEmployeeId %>&date=<%= selectedDate %>" class="btn btn-secondary">&#8592; Back</a>
+      <button class="btn btn-primary btn-lg" type="submit">Confirm booking &#8594;</button>
     </div>
   </form>
-
   <% } %>
 
 </div>

@@ -1,17 +1,16 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
-<%@ page import="model.Employee" %>
+<%@ page import="model.Employee, model.User" %>
 <%@ page import="dao.EmployeeDAO" %>
-
 <%
-    // Session check — only owner
-    if (session == null || session.getAttribute("userId") == null
-            || !"owner".equals(session.getAttribute("role"))) {
-        response.sendRedirect(request.getContextPath() + "/login.jsp");
+    User owner = (User) session.getAttribute("user");
+    if (owner == null || !"owner".equals(owner.getRole())) {
+        response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
         return;
     }
-
-    int businessId = (int) session.getAttribute("businessId");
+    String ctx = request.getContextPath();
+    Object bizIdObj = session.getAttribute("businessId");
+    int businessId = (bizIdObj != null) ? (int) bizIdObj : 0;
 
     EmployeeDAO employeeDAO = new EmployeeDAO();
     List<Employee> employees = employeeDAO.getByBusinessId(businessId);
@@ -21,324 +20,128 @@
     session.removeAttribute("successMsg");
     session.removeAttribute("errorMsg");
 %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Employees — SlotSync</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
+    <title>Employees | SlotSync</title>
+    <link rel="stylesheet" href="<%= ctx %>/css/style.css">
     <style>
-        .page-wrapper {
-            padding: 2rem;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary, #fff);
-        }
-
-        .msg {
-            padding: 0.8rem 1.2rem;
-            border-radius: 6px;
-            margin-bottom: 1.2rem;
-            font-size: 0.95rem;
-        }
-        .msg-success { background: #1a3a1a; color: #5adb5a; border: 1px solid #2d6b2d; }
-        .msg-error   { background: #3a1a1a; color: #db5a5a; border: 1px solid #6b2d2d; }
-
-        /* ── Add Employee Form ── */
-        .card {
-            background: #1e1e2e;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            color: #ccc;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .form-group label {
-            font-size: 0.85rem;
-            color: #888;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 0.6rem 0.8rem;
-            border-radius: 6px;
-            background: #12121e;
-            border: 1px solid #444;
-            color: #ddd;
-            font-size: 0.9rem;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #6c63ff;
-        }
-
-        .btn-submit {
-            margin-top: 1rem;
-            padding: 0.65rem 1.8rem;
-            background: #6c63ff;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .btn-submit:hover { opacity: 0.88; }
-
-        /* ── Employee Table ── */
-        .table-wrapper { overflow-x: auto; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
-        thead tr {
-            background: #1e1e2e;
-            color: #aaa;
-            text-transform: uppercase;
-            font-size: 0.78rem;
-            letter-spacing: 0.05em;
-        }
-
-        thead th {
-            padding: 0.9rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #333;
-        }
-
-        tbody tr {
-            border-bottom: 1px solid #2a2a2a;
-            transition: background 0.15s;
-        }
-
-        tbody tr:hover { background: #1a1a2a; }
-
-        tbody td {
-            padding: 0.85rem 1rem;
-            color: #ddd;
-            vertical-align: middle;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.7rem;
-            border-radius: 20px;
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-        .badge-active   { background: #102a10; color: #4cdc4c; }
-        .badge-inactive { background: #2a1010; color: #e05555; }
-
-        .btn {
-            display: inline-block;
-            padding: 0.35rem 0.8rem;
-            border-radius: 5px;
-            font-size: 0.82rem;
-            cursor: pointer;
-            border: none;
-            margin-right: 0.3rem;
-            text-decoration: none;
-        }
-        .btn-remove  { background: #6b2d2d; color: #fff; }
-        .btn:hover   { opacity: 0.85; }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #666;
-        }
-
-        @media (max-width: 600px) {
-            .form-grid { grid-template-columns: 1fr; }
-        }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        @media(max-width:640px){ .form-grid { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
+<div class="dash">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <a href="<%= ctx %>/" class="brand"><div class="brand-mark"></div><span>SlotSync</span></a>
+      <div class="badge badge-blue" style="margin-top:10px;font-size:11px">Owner Portal</div>
+    </div>
+    <nav class="col gap-2">
+      <div class="sidebar-section">My Business</div>
+      <a href="<%= ctx %>/views/owner/dashboard.jsp"        class="sidenav-item">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Overview</a>
+      <a href="<%= ctx %>/views/owner/manage-services.jsp"  class="sidenav-item">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 13h18"/></svg>Services</a>
+      <a href="<%= ctx %>/views/owner/manage-employees.jsp" class="sidenav-item active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0z"/><path d="M2 21a8 8 0 0120 0"/></svg>Employees</a>
+      <a href="<%= ctx %>/views/owner/appointments.jsp"     class="sidenav-item">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Appointments</a>
+      <a href="<%= ctx %>/views/owner/settings.jsp"         class="sidenav-item">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="<%= ctx %>/logout" class="sidenav-item">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</a>
+    </div>
+  </aside>
 
-    <jsp:include page="/views/common/navbar.jsp" />
-
-    <div class="page-wrapper">
-
-        <h1 class="page-title">Manage Employees</h1>
-
-        <% if (successMsg != null) { %>
-            <div class="msg msg-success"><%= successMsg %></div>
-        <% } %>
-        <% if (errorMsg != null) { %>
-            <div class="msg msg-error"><%= errorMsg %></div>
-        <% } %>
-
-        <%-- Add Employee Form --%>
-        <div class="card">
-            <h2>Add New Employee</h2>
-            <form action="<%= request.getContextPath() %>/EmployeeServlet"
-                  method="post"
-                  onsubmit="return validateEmployeeForm()">
-
-                <input type="hidden" name="action"     value="add" />
-                <input type="hidden" name="businessId" value="<%= businessId %>" />
-
-                <div class="form-grid">
-
-                    <div class="form-group">
-                        <label for="userId">User ID (Employee's registered ID)</label>
-                        <input type="number"
-                               id="userId"
-                               name="userId"
-                               placeholder="e.g. 5"
-                               required />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="designation">Designation</label>
-                        <input type="text"
-                               id="designation"
-                               name="designation"
-                               placeholder="e.g. Hairstylist"
-                               required />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="text"
-                               id="phone"
-                               name="phone"
-                               placeholder="e.g. 9800000000"
-                               required />
-                    </div>
-
-                </div>
-
-                <button type="submit" class="btn-submit">Add Employee</button>
-            </form>
-        </div>
-
-        <%-- Employee List Table --%>
-        <div class="card">
-            <h2>Current Employees (<%= employees.size() %>)</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Employee ID</th>
-                            <th>User ID</th>
-                            <th>Designation</th>
-                            <th>Phone</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <%
-                        if (employees.isEmpty()) {
-                    %>
-                        <tr>
-                            <td colspan="7" class="empty-state">
-                                No employees added yet.
-                            </td>
-                        </tr>
-                    <%
-                        } else {
-                            int i = 1;
-                            for (Employee emp : employees) {
-                    %>
-                        <tr>
-                            <td><%= i++ %></td>
-                            <td><%= emp.getEmployeeId() %></td>
-                            <td><%= emp.getUserId() %></td>
-                            <td><%= emp.getDesignation() %></td>
-                            <td><%= emp.getPhone() %></td>
-                            <td>
-                                <span class="badge badge-<%= emp.getStatus() %>">
-                                    <%= emp.getStatus() %>
-                                </span>
-                            </td>
-                            <td>
-                                <%-- Remove (soft delete) button --%>
-                                <form style="display:inline"
-                                      action="<%= request.getContextPath() %>/EmployeeServlet"
-                                      method="post"
-                                      onsubmit="return confirm('Remove this employee?')">
-                                    <input type="hidden" name="action"     value="remove" />
-                                    <input type="hidden" name="employeeId" value="<%= emp.getEmployeeId() %>" />
-                                    <button type="submit" class="btn btn-remove">Remove</button>
-                                </form>
-                            </td>
-                        </tr>
-                    <%
-                            }
-                        }
-                    %>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+  <main class="dash-main">
+    <div class="dash-head">
+      <div>
+        <h1>Employees</h1>
+        <div class="sub"><%= employees.size() %> staff member<%= employees.size() != 1 ? "s" : "" %></div>
+      </div>
     </div>
 
-    <jsp:include page="/views/common/footer.jsp" />
+    <% if (successMsg != null) { %>
+    <div style="background:var(--green-50);border:1px solid #bbf7d0;color:#15803d;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:14px"><%= successMsg %></div>
+    <% } %>
+    <% if (errorMsg != null) { %>
+    <div style="background:var(--red-50);border:1px solid #fecaca;color:#b91c1c;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:14px"><%= errorMsg %></div>
+    <% } %>
 
-    <script>
-        function validateEmployeeForm() {
-            var userId      = document.getElementById('userId').value.trim();
-            var designation = document.getElementById('designation').value.trim();
-            var phone       = document.getElementById('phone').value.trim();
+    <div class="card card-pad" style="margin-bottom:20px">
+      <h3 class="h3" style="margin-bottom:16px">Add New Employee</h3>
+      <form action="<%= ctx %>/EmployeeServlet" method="post" onsubmit="return validateEmpForm()">
+        <input type="hidden" name="action"     value="add">
+        <input type="hidden" name="businessId" value="<%= businessId %>">
+        <div class="form-grid">
+          <div class="field">
+            <label>User ID <span class="muted small">(employee's registered ID)</span></label>
+            <input class="input" type="number" id="userId" name="userId" placeholder="e.g. 5" required>
+          </div>
+          <div class="field">
+            <label>Designation</label>
+            <input class="input" type="text" id="designation" name="designation" placeholder="e.g. Hairstylist" required>
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input class="input" type="text" id="phone" name="phone" placeholder="e.g. 07700900000" required>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn btn-primary" type="submit">Add employee</button>
+        </div>
+      </form>
+    </div>
 
-            if (userId === '' || designation === '' || phone === '') {
-                alert('All fields are required.');
-                return false;
-            }
-
-            if (isNaN(userId) || parseInt(userId) <= 0) {
-                alert('User ID must be a valid number.');
-                return false;
-            }
-
-            if (!/^\d{10}$/.test(phone)) {
-                alert('Phone number must be 10 digits.');
-                return false;
-            }
-
-            if (/\d/.test(designation)) {
-                alert('Designation cannot contain numbers.');
-                return false;
-            }
-
-            return true;
-        }
-    </script>
-
+    <div class="card">
+      <div style="padding:18px 22px;border-bottom:1px solid var(--border)">
+        <h3 class="h3">Current Employees (<%= employees.size() %>)</h3>
+      </div>
+      <% if (employees.isEmpty()) { %>
+      <div style="padding:40px;text-align:center;color:var(--text-2);font-size:14px">No employees added yet.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>#</th><th>Employee ID</th><th>User ID</th><th>Designation</th><th>Phone</th><th>Status</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody>
+        <% int i = 1; for (Employee emp : employees) { %>
+        <tr class="hov">
+          <td class="muted small"><%= i++ %></td>
+          <td class="mono small"><%= emp.getEmployeeId() %></td>
+          <td class="mono small"><%= emp.getUserId() %></td>
+          <td style="font-weight:500"><%= emp.getDesignation() %></td>
+          <td><%= emp.getPhone() %></td>
+          <td><span class="badge <%= "active".equals(emp.getStatus()) ? "badge-green" : "badge-red" %>"><span class="badge-dot"></span><%= emp.getStatus() %></span></td>
+          <td style="text-align:right">
+            <form style="display:inline" action="<%= ctx %>/EmployeeServlet" method="post"
+                  onsubmit="return confirm('Remove this employee?')">
+              <input type="hidden" name="action"     value="remove">
+              <input type="hidden" name="employeeId" value="<%= emp.getEmployeeId() %>">
+              <button class="btn btn-danger btn-sm" type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+        <% } %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </main>
+</div>
+<script>
+function validateEmpForm() {
+  var uid = document.getElementById('userId').value.trim();
+  var des = document.getElementById('designation').value.trim();
+  var ph  = document.getElementById('phone').value.trim();
+  if (!uid || isNaN(uid) || parseInt(uid) <= 0) { alert('Enter a valid User ID.'); return false; }
+  if (!des) { alert('Designation is required.'); return false; }
+  if (!ph)  { alert('Phone is required.'); return false; }
+  return true;
+}
+</script>
 </body>
 </html>

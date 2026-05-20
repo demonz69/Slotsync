@@ -1,79 +1,80 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c"   uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt"  %>
+<%@ page import="java.util.List, model.Wishlist, model.User, dao.WishlistDAO" %>
 <%
-    if (session.getAttribute("userId") == null || !"client".equals(session.getAttribute("role"))) {
+    User wlUser = (User) session.getAttribute("user");
+    if (wlUser == null || !"client".equals(wlUser.getRole())) {
         response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
         return;
+    }
+    String ctx = request.getContextPath();
+    // Load wishlist directly if not already set by servlet
+    if (request.getAttribute("wishlist") == null) {
+        request.setAttribute("wishlist", new WishlistDAO().getByClientId(wlUser.getUserId()));
     }
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Wishlist - SlotSync</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-  <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 30px; }
-    .page-header { max-width: 860px; margin: 0 auto 24px; }
-    .page-header h1 { margin: 0; }
-    .page-header p { color: #888; margin: 4px 0 0; font-size: 0.9rem; }
-    .alert { max-width: 860px; margin: 0 auto 16px; padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; }
-    .alert-success { background: #d8ede4; color: #1b5e3b; }
-    .alert-error { background: #fdecea; color: #c0392b; }
-    .grid { max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
-    .wl-card { background: #fff; border-radius: 12px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-    .wl-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
-    .wl-date { font-size: 0.8rem; color: #888; }
-    .wl-price { font-size: 1.15rem; font-weight: 700; color: #2D6A4F; margin: 10px 0; }
-    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
-    .btn-book { flex: 1; background: #1a1714; color: #fff; border: none; padding: 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; }
-    .btn-remove { background: transparent; border: 1.5px solid #ddd; color: #888; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
-    .btn-remove:hover { border-color: #c0392b; color: #c0392b; }
-    .empty { max-width: 860px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 60px 20px; text-align: center; color: #888; }
-    .empty p { margin-bottom: 16px; }
-    .btn-browse { background: #1a1714; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist | SlotSync</title>
+    <link rel="stylesheet" href="<%= ctx %>/css/style.css">
 </head>
 <body>
-
-<div class="page-header">
-  <h1>My Wishlist</h1>
-  <p>Services you have saved for later</p>
-</div>
-
-<c:if test="${param.success == 'removed'}">
-  <div class="alert alert-success">Service removed from your wishlist.</div>
-</c:if>
-
-<c:choose>
-  <c:when test="${empty wishlist}">
-    <div class="empty">
-      <p>Your wishlist is empty. Browse services and save the ones you like!</p>
-      <a href="${pageContext.request.contextPath}/views/client/searchResult.jsp" class="btn-browse">Browse Services</a>
-    </div>
-  </c:when>
-  <c:otherwise>
-    <div class="grid">
-      <c:forEach var="item" items="${wishlist}">
-      <div class="wl-card">
-        <div class="wl-name">${item.serviceName}</div>
-        <div class="wl-date">Saved on ${item.addedAt}</div>
-        <div class="wl-price">&pound;<fmt:formatNumber value="${item.servicePrice}" pattern="#,##0.00"/></div>
-        <div class="btn-row">
-          <a href="${pageContext.request.contextPath}/views/client/booking.jsp?step=2&serviceId=${item.serviceId}" class="btn-book">Book Now</a>
-          <form method="post" action="${pageContext.request.contextPath}/user" onsubmit="return confirm('Remove from wishlist?')">
-            <input type="hidden" name="action" value="removeWishlist"/>
-            <input type="hidden" name="serviceId" value="${item.serviceId}"/>
-            <button type="submit" class="btn-remove">Remove</button>
-          </form>
+<jsp:include page="/views/common/navbar.jsp" />
+<div class="container" style="padding-top:40px;padding-bottom:60px;max-width:980px">
+    <div class="dash-head" style="margin-bottom:24px">
+        <div>
+            <h1 style="font-size:26px;font-weight:600;letter-spacing:-0.01em;margin:0 0 4px">My Wishlist</h1>
+            <div class="muted small">Services you've saved for later</div>
         </div>
-      </div>
-      </c:forEach>
+        <a href="<%= ctx %>/views/client/home.jsp" class="btn btn-secondary btn-sm">Browse services</a>
     </div>
-  </c:otherwise>
-</c:choose>
 
+    <c:if test="${param.success == 'removed'}">
+    <div style="background:var(--green-50);border:1px solid #bbf7d0;color:#15803d;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:14px">
+        Service removed from your wishlist.
+    </div>
+    </c:if>
+
+    <c:choose>
+    <c:when test="${empty wishlist}">
+        <div class="card" style="padding:60px 24px;text-align:center;color:var(--text-2)">
+            <div style="font-size:14px;margin-bottom:16px">Your wishlist is empty. Browse services and save the ones you like!</div>
+            <a href="<%= ctx %>/views/client/home.jsp" class="btn btn-primary">Browse services</a>
+        </div>
+    </c:when>
+    <c:otherwise>
+        <div class="wish-grid">
+        <c:forEach var="item" items="${wishlist}">
+            <div class="wish-card">
+                <div class="wish-thumb">service preview</div>
+                <div class="between">
+                    <div>
+                        <div style="font-weight:600">${item.serviceName}</div>
+                        <div class="muted tiny" style="margin-top:2px">Saved on ${item.addedAt}</div>
+                    </div>
+                </div>
+                <div class="between" style="margin-top:12px">
+                    <span class="mono" style="font-weight:600">&pound;<fmt:formatNumber value="${item.servicePrice}" pattern="#,##0.00"/></span>
+                    <div class="row gap-2">
+                        <a href="<%= ctx %>/views/client/booking.jsp?step=2&serviceId=${item.serviceId}"
+                           class="btn btn-primary btn-sm">Book</a>
+                        <form method="post" action="<%= ctx %>/user" onsubmit="return confirm('Remove from wishlist?')" style="display:inline">
+                            <input type="hidden" name="action"    value="removeWishlist">
+                            <input type="hidden" name="serviceId" value="${item.serviceId}">
+                            <button class="btn btn-secondary btn-sm" type="submit">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </c:forEach>
+        </div>
+    </c:otherwise>
+    </c:choose>
+</div>
+<jsp:include page="/views/common/footer.jsp" />
 </body>
 </html>

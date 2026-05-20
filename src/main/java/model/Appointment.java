@@ -63,13 +63,14 @@ public class Appointment {
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
-    // Display fields
+    // Display fields (populated via JOIN in DAO)
     private String serviceName;
     private String employeeName;
     private String businessName;
+    private String clientName;
     private double price;
 
-    public String getServiceName() { return serviceName; }
+    public String getServiceName()  { return serviceName; }
     public void setServiceName(String serviceName) { this.serviceName = serviceName; }
 
     public String getEmployeeName() { return employeeName; }
@@ -78,8 +79,14 @@ public class Appointment {
     public String getBusinessName() { return businessName; }
     public void setBusinessName(String businessName) { this.businessName = businessName; }
 
+    public String getClientName()   { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
+
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
+
+    // Alias — slotTime is the start time of the appointment
+    public String getStartTime()    { return slotTime; }
 
     @Override
     public String toString() {

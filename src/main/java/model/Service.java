@@ -63,4 +63,6 @@ public class Service {
 
     // Backward-compatible setter
     public void setDurationMinutes(int d)              { this.durationMin = d; }
+    // Alias used by booking.jsp
+    public int getDuration()                           { return durationMin; }
 }

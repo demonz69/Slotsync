@@ -90,7 +90,7 @@
                         </div>
                         <div class="info-content">
                             <div class="info-label">Hours</div>
-                            <div class="info-value">SunΓÇôFri &middot; 9:00 ΓÇô 18:00</div>
+                            <div class="info-value">Mon&ndash;Fri &middot; 9:00 &ndash; 18:00</div>
                         </div>
                     </div>
 

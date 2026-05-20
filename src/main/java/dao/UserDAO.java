@@ -177,6 +177,30 @@ public class UserDAO {
         }
     }
 
+    // Get a single user by ID (used by client/profile.jsp)
+    public User getUserById(int userId) {
+        try {
+            String query = "SELECT u.*, r.role_name FROM users u " +
+                           "JOIN roles r ON u.role_id = r.role_id WHERE u.user_id = ?";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                User user = new User();
+                user.setUserId(rs.getInt("user_id"));
+                user.setFullName(rs.getString("full_name"));
+                user.setEmail(rs.getString("email"));
+                user.setPhone(rs.getString("phone"));
+                user.setRole(rs.getString("role_name"));
+                user.setStatus(rs.getString("status"));
+                return user;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     // Check if phone number already exists (for another user)
     public boolean isPhoneExists(String phone) {
         try {

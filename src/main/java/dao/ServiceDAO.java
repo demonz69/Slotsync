@@ -180,6 +180,13 @@ public class ServiceDAO {
         return 0;
     }
 
+    // Alias used by client/booking.jsp
+    public List<Service> getAllActive() { return getAllServices(); }
+
+    // Get all services for a business (all statuses — for owner management)
+    public List<Service> getByBusinessId(int businessId) { return getServicesByBusiness(businessId); }
+    public Service getById(int serviceId)                { return getServiceById(serviceId); }
+
     // Map a ResultSet row to a Service object
     private Service mapRow(ResultSet rs) throws SQLException {
         return new Service(

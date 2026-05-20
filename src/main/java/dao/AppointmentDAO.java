@@ -98,18 +98,32 @@ public class AppointmentDAO {
         return list;
     }
 
-    // Get all appointments for a business (owner view)
+    // Get all appointments for a business (owner view) — with client/service/employee names
     public List<Appointment> getAppointmentsByBusiness(int businessId) {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT * FROM appointments WHERE business_id = ? " +
-                     "ORDER BY appointment_date DESC, slot_time ASC";
+        String sql = "SELECT a.*, " +
+                     "  c.full_name AS client_name, " +
+                     "  s.service_name, s.price, " +
+                     "  eu.full_name AS employee_name " +
+                     "FROM appointments a " +
+                     "LEFT JOIN users    c  ON a.client_id   = c.user_id " +
+                     "LEFT JOIN services s  ON a.service_id  = s.service_id " +
+                     "LEFT JOIN employees e ON a.employee_id = e.employee_id " +
+                     "LEFT JOIN users   eu  ON e.user_id     = eu.user_id " +
+                     "WHERE a.business_id = ? " +
+                     "ORDER BY a.appointment_date DESC, a.slot_time ASC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, businessId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapRow(rs));
+                Appointment apt = mapRow(rs);
+                apt.setClientName(rs.getString("client_name"));
+                apt.setServiceName(rs.getString("service_name"));
+                apt.setPrice(rs.getDouble("price"));
+                apt.setEmployeeName(rs.getString("employee_name"));
+                list.add(apt);
             }
 
         } catch (SQLException e) {
@@ -117,6 +131,11 @@ public class AppointmentDAO {
         }
         return list;
     }
+
+    // Aliases used by JSPs
+    public List<Appointment> getByBusinessId(int businessId) { return getAppointmentsByBusiness(businessId); }
+    public boolean createAppointment(Appointment apt)        { return bookAppointment(apt); }
+    public Appointment getById(int id)                       { return getAppointmentById(id); }
 
     // Get all appointments — admin view
     public List<Appointment> getAllAppointments() {
