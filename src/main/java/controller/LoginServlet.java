@@ -27,6 +27,8 @@ public class LoginServlet extends HttpServlet {
         if (user != null) {
             HttpSession session = request.getSession();
             session.setAttribute("user", user);
+            session.setAttribute("userId", user.getUserId());
+            session.setAttribute("role", user.getRole());
             
             // Remember Me Cookies
             String remember = request.getParameter("remember");
@@ -89,6 +91,8 @@ public class LoginServlet extends HttpServlet {
             if (user != null) {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", user);
+                session.setAttribute("userId", user.getUserId());
+                session.setAttribute("role", user.getRole());
                 if (user.getRole().equals("admin")) {
                     response.sendRedirect("views/admin/dashboard.jsp");
                 } else {

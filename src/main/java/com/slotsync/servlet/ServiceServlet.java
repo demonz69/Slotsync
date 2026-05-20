@@ -23,7 +23,7 @@ public class ServiceServlet extends HttpServlet {
         // Session check
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            resp.sendRedirect(req.getContextPath() + "/views/auth/login.jsp");
             return;
         }
 
@@ -61,7 +61,7 @@ public class ServiceServlet extends HttpServlet {
         // Session check
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            resp.sendRedirect(req.getContextPath() + "/views/auth/login.jsp");
             return;
         }
 
