@@ -5,15 +5,11 @@ import model.User;
 
 public class UserDAO {
 
-    private Connection con;
-
-    public UserDAO() {
-        con = DBConnection.getConnection();
-    }
+    public UserDAO() {}
 
     // Register User
     public boolean register(User user) {
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "INSERT INTO users (full_name, email, phone, password, role_id) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, user.getFullName());
@@ -35,7 +31,7 @@ public class UserDAO {
     public User login(String email, String password) {
         User user = null;
 
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "SELECT u.*, r.role_name FROM users u JOIN roles r ON u.role_id = r.role_id WHERE u.email=? AND u.password=?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, email);
@@ -64,7 +60,7 @@ public class UserDAO {
     // Check if user exists (email validation)
     public boolean isEmailExists(String email) {
         boolean exists = false;
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "SELECT * FROM users WHERE email=?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, email);
@@ -81,7 +77,7 @@ public class UserDAO {
     // Admin: Get all users
     public java.util.List<User> getAllUsers() {
         java.util.List<User> list = new java.util.ArrayList<>();
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "SELECT u.*, r.role_name FROM users u JOIN roles r ON u.role_id = r.role_id ORDER BY u.user_id DESC";
             PreparedStatement ps = con.prepareStatement(query);
             ResultSet rs = ps.executeQuery();
@@ -105,7 +101,7 @@ public class UserDAO {
     // Admin: Count users by status
     public int countByStatus(String status) {
         int count = 0;
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "SELECT COUNT(*) FROM users WHERE status=?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, status);
@@ -121,7 +117,7 @@ public class UserDAO {
     
     // Admin: Update user status
     public boolean updateStatus(int userId, String status) {
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "UPDATE users SET status=? WHERE user_id=?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, status);
@@ -136,7 +132,7 @@ public class UserDAO {
     // Admin: Count all users
     public int countAllUsers() {
         int count = 0;
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "SELECT COUNT(*) FROM users";
             PreparedStatement ps = con.prepareStatement(query);
             ResultSet rs = ps.executeQuery();
@@ -151,7 +147,7 @@ public class UserDAO {
     
     // Admin: Delete user
     public boolean deleteUser(int userId) {
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "DELETE FROM users WHERE user_id=?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setInt(1, userId);
@@ -164,7 +160,7 @@ public class UserDAO {
 
     // Update user profile (name, phone)
     public boolean updateUser(User user) {
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "UPDATE users SET full_name=?, phone=? WHERE user_id=?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, user.getFullName());
@@ -179,7 +175,7 @@ public class UserDAO {
 
     // Check if phone number already exists (for another user)
     public boolean isPhoneExists(String phone) {
-        try {
+        try (Connection con = DBConnection.getConnection()) {
             String query = "SELECT * FROM users WHERE phone=?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, phone);
