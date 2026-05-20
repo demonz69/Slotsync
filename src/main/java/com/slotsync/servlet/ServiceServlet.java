@@ -51,7 +51,7 @@ public class ServiceServlet extends HttpServlet {
             String msg = req.getParameter("msg");
             if (msg != null) req.setAttribute("msg", msg);
 
-            req.getRequestDispatcher("/WEB-INF/views/admin/manageServices.jsp").forward(req, resp);
+            req.getRequestDispatcher("/views/admin/manage-services.jsp").forward(req, resp);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class ServiceServlet extends HttpServlet {
                 req.setAttribute("error", "All fields are required.");
                 List<Service> services = dao.getAllServices();
                 req.setAttribute("services", services);
-                req.getRequestDispatcher("/WEB-INF/views/admin/manageServices.jsp").forward(req, resp);
+                req.getRequestDispatcher("/views/admin/manage-services.jsp").forward(req, resp);
                 return;
             }
 
@@ -118,7 +118,7 @@ public class ServiceServlet extends HttpServlet {
             req.setAttribute("error", "Invalid number in form. Please check your input.");
             List<Service> services = dao.getAllServices();
             req.setAttribute("services", services);
-            req.getRequestDispatcher("/WEB-INF/views/admin/manageServices.jsp").forward(req, resp);
+            req.getRequestDispatcher("/views/admin/manage-services.jsp").forward(req, resp);
         }
     }
 }

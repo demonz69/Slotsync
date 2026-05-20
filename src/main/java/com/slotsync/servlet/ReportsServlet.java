@@ -36,7 +36,7 @@ public class ReportsServlet extends HttpServlet {
             req.setAttribute("averageRatings",        dao.getAverageRatings());
             req.setAttribute("last7Days",             dao.getAppointmentsLast7Days());
 
-            req.getRequestDispatcher("/WEB-INF/views/admin/reports.jsp").forward(req, resp);
+            req.getRequestDispatcher("/views/admin/reports.jsp").forward(req, resp);
 
         } catch (SQLException e) {
             req.setAttribute("error", "Failed to load reports: " + e.getMessage());

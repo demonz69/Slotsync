@@ -53,6 +53,6 @@ public class SearchServlet extends HttpServlet {
             }
         }
 
-        req.getRequestDispatcher("/WEB-INF/views/admin/search.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/admin/search.jsp").forward(req, resp);
     }
 }
