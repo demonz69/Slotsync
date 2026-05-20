@@ -6,10 +6,12 @@ import model.Service;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
+import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
+@WebServlet("/admin/services")
 public class ServiceServlet extends HttpServlet {
 
     private final ServiceDAO dao = new ServiceDAO();

@@ -5,9 +5,11 @@ import dao.SearchDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
+import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.sql.SQLException;
 
+@WebServlet("/search")
 public class SearchServlet extends HttpServlet {
 
     private final SearchDAO dao = new SearchDAO();

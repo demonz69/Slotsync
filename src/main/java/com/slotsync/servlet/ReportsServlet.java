@@ -5,9 +5,11 @@ import dao.StatsDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
+import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.sql.SQLException;
 
+@WebServlet("/admin/reports")
 public class ReportsServlet extends HttpServlet {
 
     private final StatsDAO dao = new StatsDAO();
