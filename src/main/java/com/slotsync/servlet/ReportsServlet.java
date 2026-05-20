@@ -1,6 +1,6 @@
 package com.slotsync.servlet;
 
-import com.slotsync.dao.StatsDAO;
+import dao.StatsDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;

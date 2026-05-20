@@ -1,9 +1,9 @@
 package com.slotsync.test;
 
-import com.slotsync.dao.SearchDAO;
-import com.slotsync.dao.ServiceDAO;
-import com.slotsync.dao.StatsDAO;
-import com.slotsync.model.Service;
+import dao.SearchDAO;
+import dao.ServiceDAO;
+import dao.StatsDAO;
+import model.Service;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -44,68 +44,58 @@ public class IntegrationTest {
 
     static void test1_getAllServices() {
         print("[TEST 1] getAllServices()");
-        try {
-            List<Service> list = serviceDAO.getAllServices();
-            pass("Found " + list.size() + " services");
-        } catch (SQLException e) { fail(e.getMessage()); }
+        List<Service> list = serviceDAO.getAllServices();
+        pass("Found " + list.size() + " services");
     }
 
     static void test2_getServiceById() {
         print("[TEST 2] getServiceById(1)");
-        try {
-            Service s = serviceDAO.getServiceById(1);
-            if (s != null) pass("Found: " + s.getServiceName());
-            else fail("No service with ID 1 found");
-        } catch (SQLException e) { fail(e.getMessage()); }
+        Service s = serviceDAO.getServiceById(1);
+        if (s != null) pass("Found: " + s.getServiceName());
+        else fail("No service with ID 1 found");
     }
 
     static void test3_addService() {
         print("[TEST 3] addService()");
-        try {
-            Service s = new Service();
-            s.setBusinessId(1);
-            s.setServiceName("TEST_" + System.currentTimeMillis());
-            s.setCategoryId(1);
-            s.setDurationMin(30);
-            s.setPrice(100.00);
-            s.setDescription("Integration test - safe to delete");
-            s.setActive(true);
-            boolean ok = serviceDAO.addService(s);
-            if (ok) pass("Service inserted");
-            else fail("Insert returned false");
-        } catch (SQLException e) { fail(e.getMessage()); }
+        Service s = new Service();
+        s.setBusinessId(1);
+        s.setServiceName("TEST_" + System.currentTimeMillis());
+        s.setCategoryId(1);
+        s.setDurationMin(30);
+        s.setPrice(100.00);
+        s.setDescription("Integration test - safe to delete");
+        s.setActive(true);
+        boolean ok = serviceDAO.addService(s);
+        if (ok) pass("Service inserted");
+        else fail("Insert returned false");
     }
 
     static void test4_updateService() {
         print("[TEST 4] updateService(1)");
-        try {
-            Service s = serviceDAO.getServiceById(1);
-            if (s == null) { fail("Service 1 not found"); return; }
-            String original = s.getServiceName();
-            s.setServiceName(original + "_updated");
-            serviceDAO.updateService(s);
-            s.setServiceName(original);
-            serviceDAO.updateService(s); // restore
-            pass("Update and restore successful");
-        } catch (SQLException e) { fail(e.getMessage()); }
+        Service s = serviceDAO.getServiceById(1);
+        if (s == null) { fail("Service 1 not found"); return; }
+        String original = s.getServiceName();
+        s.setServiceName(original + "_updated");
+        serviceDAO.updateService(s);
+        s.setServiceName(original);
+        serviceDAO.updateService(s); // restore
+        pass("Update and restore successful");
     }
 
     static void test5_deleteService() {
         print("[TEST 5] deleteService() - deletes test service from test3");
-        try {
-            List<Service> all = serviceDAO.getAllServices();
-            Service toDelete = null;
-            for (int i = all.size() - 1; i >= 0; i--) {
-                if (all.get(i).getServiceName().startsWith("TEST_")) {
-                    toDelete = all.get(i);
-                    break;
-                }
+        List<Service> all = serviceDAO.getAllServices();
+        Service toDelete = null;
+        for (int i = all.size() - 1; i >= 0; i--) {
+            if (all.get(i).getServiceName().startsWith("TEST_")) {
+                toDelete = all.get(i);
+                break;
             }
-            if (toDelete == null) { fail("Test service not found"); return; }
-            boolean ok = serviceDAO.deleteService(toDelete.getServiceId());
-            if (ok) pass("Deleted service ID " + toDelete.getServiceId());
-            else fail("Delete returned false");
-        } catch (SQLException e) { fail(e.getMessage()); }
+        }
+        if (toDelete == null) { fail("Test service not found"); return; }
+        boolean ok = serviceDAO.deleteService(toDelete.getServiceId());
+        if (ok) pass("Deleted service ID " + toDelete.getServiceId());
+        else fail("Delete returned false");
     }
 
     static void test6_searchServices() {

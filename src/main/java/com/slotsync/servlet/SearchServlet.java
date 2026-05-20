@@ -1,6 +1,6 @@
 package com.slotsync.servlet;
 
-import com.slotsync.dao.SearchDAO;
+import dao.SearchDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;

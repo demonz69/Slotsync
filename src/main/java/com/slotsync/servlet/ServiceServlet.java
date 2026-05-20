@@ -1,7 +1,7 @@
 package com.slotsync.servlet;
 
-import com.slotsync.dao.ServiceDAO;
-import com.slotsync.model.Service;
+import dao.ServiceDAO;
+import model.Service;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
@@ -27,7 +27,6 @@ public class ServiceServlet extends HttpServlet {
 
         String action = req.getParameter("action");
 
-        try {
             if ("delete".equals(action)) {
                 int id = Integer.parseInt(req.getParameter("id"));
                 dao.deleteService(id);
@@ -51,11 +50,6 @@ public class ServiceServlet extends HttpServlet {
             if (msg != null) req.setAttribute("msg", msg);
 
             req.getRequestDispatcher("/WEB-INF/views/admin/manageServices.jsp").forward(req, resp);
-
-        } catch (SQLException e) {
-            req.setAttribute("error", "Database error: " + e.getMessage());
-            req.getRequestDispatcher("/WEB-INF/views/error.jsp").forward(req, resp);
-        }
     }
 
     @Override
@@ -118,15 +112,10 @@ public class ServiceServlet extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/admin/services");
             }
 
-        } catch (SQLException e) {
-            req.setAttribute("error", "Database error: " + e.getMessage());
-            req.getRequestDispatcher("/WEB-INF/views/error.jsp").forward(req, resp);
         } catch (NumberFormatException e) {
             req.setAttribute("error", "Invalid number in form. Please check your input.");
-            try {
-                List<Service> services = dao.getAllServices();
-                req.setAttribute("services", services);
-            } catch (SQLException ex) { /* ignore */ }
+            List<Service> services = dao.getAllServices();
+            req.setAttribute("services", services);
             req.getRequestDispatcher("/WEB-INF/views/admin/manageServices.jsp").forward(req, resp);
         }
     }
