@@ -11,10 +11,26 @@ public class AppointmentDAO {
 
     // Book a new appointment
     public boolean bookAppointment(Appointment apt) {
+        // Look up service duration and calculate end_time
+        String endTime = null;
+        try {
+            String durSql = "SELECT duration_min FROM services WHERE service_id = ?";
+            try (Connection c2 = DBConnection.getConnection();
+                 PreparedStatement p2 = c2.prepareStatement(durSql)) {
+                p2.setInt(1, apt.getServiceId());
+                ResultSet r2 = p2.executeQuery();
+                if (r2.next() && apt.getSlotTime() != null) {
+                    int mins = r2.getInt("duration_min");
+                    java.time.LocalTime start = java.time.LocalTime.parse(apt.getSlotTime().length() > 5 ? apt.getSlotTime().substring(0,5) : apt.getSlotTime());
+                    endTime = start.plusMinutes(mins).toString();
+                }
+            }
+        } catch (Exception ignored) {}
+
         String sql = "INSERT INTO appointments " +
                      "(client_id, employee_id, service_id, business_id, " +
-                     "appointment_date, slot_time, status, notes) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)";
+                     "appointment_date, slot_time, end_time, status, notes) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -24,7 +40,8 @@ public class AppointmentDAO {
             ps.setInt(4, apt.getBusinessId());
             ps.setString(5, apt.getAppointmentDate());
             ps.setString(6, apt.getSlotTime());
-            ps.setString(7, apt.getNotes());
+            ps.setString(7, endTime);
+            ps.setString(8, apt.getNotes());
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
@@ -209,15 +226,13 @@ public class AppointmentDAO {
     // Get available unbooked slots for an employee on a specific date
     public List<String> getAvailableSlots(int employeeId, String date) {
 
-        // Step 1: Convert date to day name e.g. "2026-05-11" -> "Sunday"
-        String dayName = "";
+        // Step 1: Convert date to day-of-week number (0=Sun, 1=Mon…6=Sat)
+        int dayNum = -1;
         try {
             java.time.LocalDate localDate = java.time.LocalDate.parse(date);
-            dayName = localDate.getDayOfWeek()
-                               .getDisplayName(
-                                   java.time.format.TextStyle.FULL,
-                                   java.util.Locale.ENGLISH
-                               );
+            // Java DayOfWeek: MONDAY=1…SUNDAY=7. DB stores 0=Sun,1=Mon…6=Sat
+            int javaDay = localDate.getDayOfWeek().getValue(); // 1=Mon…7=Sun
+            dayNum = (javaDay == 7) ? 0 : javaDay;            // 0=Sun,1=Mon…6=Sat
         } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
@@ -226,7 +241,7 @@ public class AppointmentDAO {
         // Step 2: Get employee shift for that day from availability table
         String availSql = "SELECT start_time, end_time, slot_duration " +
                           "FROM availability " +
-                          "WHERE employee_id = ? AND day_of_week = ?";
+                          "WHERE employee_id = ? AND day_of_week = ? AND is_available = 1";
 
         List<String> allSlots = new ArrayList<>();
 
@@ -234,7 +249,7 @@ public class AppointmentDAO {
              PreparedStatement ps = conn.prepareStatement(availSql)) {
 
             ps.setInt(1, employeeId);
-            ps.setString(2, dayName);
+            ps.setInt(2, dayNum);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {

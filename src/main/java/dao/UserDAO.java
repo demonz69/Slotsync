@@ -49,6 +49,7 @@ public class UserDAO {
                 user.setFullName(rs.getString("full_name"));
                 user.setEmail(rs.getString("email"));
                 user.setPhone(rs.getString("phone"));
+                user.setPassword(rs.getString("password"));
                 user.setRoleId(rs.getInt("role_id"));
                 user.setRole(rs.getString("role_name"));
                 user.setStatus(rs.getString("status"));
@@ -199,6 +200,20 @@ public class UserDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    // Update password for a user
+    public boolean updatePassword(int userId, String hashedPassword) {
+        try {
+            String query = "UPDATE users SET password=? WHERE user_id=?";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, hashedPassword);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // Check if phone number already exists (for another user)
